@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { useLocation, useBlocker } from 'react-router-dom';
+import { useBlocker } from 'react-router-dom';
 import { useConfirmation } from '../../shared/hooks/useConfirmation';
 import { StorageService } from '../../shared/utils/storage';
 import { Section, Course } from '../../shared/utils/types';
@@ -12,6 +12,7 @@ const TIME_SLOTS = [
     '08:00', '09:45', '11:30', '13:15', '14:00'
 ];
 const BLOCKED_TIMES = new Set(['13:15']);
+const GOLDEN_ANGLE_DEGREES = 137.5;
 
 export const Schedule = () => {
     const [sections, setSections] = useState<Section[]>([]);
@@ -20,18 +21,12 @@ export const Schedule = () => {
     const [error, setError] = useState<string | null>(null);
     const [dragContext, setDragContext] = useState<{ sectionId: string, sourceDay: string, sourceTime: string } | null>(null);
     const [dragOverKey, setDragOverKey] = useState<string | null>(null);
-    const location = useLocation();
-    const [colorSeed, setColorSeed] = useState<number>(() => Date.now());
     const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
     const { showConfirmation } = useConfirmation();
 
     useEffect(() => {
         loadData();
     }, []);
-
-    useEffect(() => {
-        setColorSeed(Date.now());
-    }, [location.key]);
 
     const cloneSections = (items: Section[]) => items.map(section => ({
         ...section,
@@ -69,7 +64,12 @@ export const Schedule = () => {
         return hash;
     };
 
-    const buildSectionToneMap = (_seed: number) => {
+    const normalizeHue = (hue: number) => {
+        const normalized = hue % 360;
+        return normalized < 0 ? normalized + 360 : normalized;
+    };
+
+    const buildSectionHueMap = () => {
         const map = new Map<string, number>();
         const sorted = [...sections].sort((a, b) => {
             const aKey = getSubjectKey(a);
@@ -80,31 +80,25 @@ export const Schedule = () => {
 
         sorted.forEach((section, idx) => {
             if (section.color) {
-                map.set(section.id, hashToIndex(section.color, 12));
+                map.set(section.id, hashToIndex(section.color, 360));
                 return;
             }
-            map.set(section.id, idx % 12);
+            map.set(section.id, normalizeHue(idx * GOLDEN_ANGLE_DEGREES));
         });
 
         return map;
     };
 
-    const sectionToneMap = useMemo(() => buildSectionToneMap(colorSeed), [sections, colorSeed]);
-    const toneClasses = [
-        styles.sectionTone0,
-        styles.sectionTone1,
-        styles.sectionTone2,
-        styles.sectionTone3,
-        styles.sectionTone4,
-        styles.sectionTone5,
-        styles.sectionTone6,
-        styles.sectionTone7,
-        styles.sectionTone8,
-        styles.sectionTone9,
-        styles.sectionTone10,
-        styles.sectionTone11
-    ];
-    const getSectionToneClass = (section: Section) => toneClasses[sectionToneMap.get(section.id) ?? 0];
+    const sectionHueMap = useMemo(() => buildSectionHueMap(), [sections, courses]);
+    const getSectionToneStyle = (section: Section): React.CSSProperties => {
+        const hue = sectionHueMap.get(section.id) ?? 0;
+        const useDarkText = hue >= 45 && hue <= 95;
+        return {
+            backgroundColor: `hsl(${hue}deg 68% 42%)`,
+            borderColor: `hsl(${hue}deg 68% 34%)`,
+            color: useDarkText ? 'hsl(220deg 30% 14%)' : 'hsl(210deg 40% 98%)'
+        };
+    };
 
     const slotKey = (day: string, time: string) => `${day}-${time}`;
 
@@ -559,31 +553,24 @@ export const Schedule = () => {
                                         ].filter(Boolean).join(' ')}
                                     >
                                         {section && !isBlocked ? (
-                                            (() => {
-                                                const toneClass = getSectionToneClass(section);
-                                                return (
-                                                <div
-                                                    draggable
-                                                    onDragStart={(e) => handleDragStart(e, section.id, day, time)}
-                                                    onDragEnd={handleDragEnd}
-                                                    className={[
-                                                        styles.sectionCard,
-                                                        toneClass
-                                                    ].join(' ')}
-                                                    aria-label={`${section.name} ${time}-${calculateEndTime(time)} on ${day}`}
-                                                >
-                                                    <h3 className={styles.sectionCardTitle}>
-                                                        {getCourseName(section.courseId)}
-                                                    </h3>
-                                                    <h4 className={styles.sectionCardSubtitle}>
-                                                        {section.name}
-                                                    </h4>
-                                                    <div className={styles.sectionCardMeta}>
-                                                        Room {section.roomId || 'N/A'}
-                                                    </div>
+                                            <div
+                                                draggable
+                                                onDragStart={(e) => handleDragStart(e, section.id, day, time)}
+                                                onDragEnd={handleDragEnd}
+                                                className={styles.sectionCard}
+                                                style={getSectionToneStyle(section)}
+                                                aria-label={`${section.name} ${time}-${calculateEndTime(time)} on ${day}`}
+                                            >
+                                                <h3 className={styles.sectionCardTitle}>
+                                                    {getCourseName(section.courseId)}
+                                                </h3>
+                                                <h4 className={styles.sectionCardSubtitle}>
+                                                    {section.name}
+                                                </h4>
+                                                <div className={styles.sectionCardMeta}>
+                                                    Room {section.roomId || 'N/A'}
                                                 </div>
-                                                );
-                                            })()
+                                            </div>
                                         ) : (
                                             <div className={styles.emptySlot}>
                                                 <PlusIcon size={24} />
