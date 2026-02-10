@@ -102,7 +102,7 @@ export const seedDatabase = () => {
             id: crypto.randomUUID(),
             courseId: course.id,
             professorId: teacher.id,
-            name: `${course.name} - ${config.nameSuffix}`,
+            name: config.nameSuffix,
             days: config.days,
             startTime: config.start,
             endTime: config.end,
