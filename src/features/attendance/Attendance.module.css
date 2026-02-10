@@ -232,12 +232,16 @@
     border-radius: 50%;
     background-color: var(--primary);
     animation: pulse 2s infinite;
+    align-self: center;
+    position: relative;
+    top: -0.5px;
 }
 
 .selectedText {
     font-size: 0.8rem;
     font-weight: 700;
     color: var(--primary);
+    line-height: 1;
 }
 
 .dashboardDivider {

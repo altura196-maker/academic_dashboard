@@ -64,6 +64,8 @@ export const StudentsModule = ({ sectionId, courseId, hideHeader = false }: Stud
     const [page, setPage] = useState(1);
     const [pageSize, setPageSize] = useState<number>(25);
     const [pageSizeInput, setPageSizeInput] = useState<string>(String(25));
+    const [isRowsMenuOpen, setIsRowsMenuOpen] = useState(false);
+    const rowsPresetOptions = [5, 10, 15, 20, 25, 50, 100, 150];
 
     useEffect(() => {
         setPage(1);
@@ -75,27 +77,51 @@ export const StudentsModule = ({ sectionId, courseId, hideHeader = false }: Stud
         setPageSizeInput(String(pageSize));
     }, [pageSize]);
 
+    const commitPageSizeInput = useCallback((rawValue: string) => {
+        const value = rawValue.trim();
+        if (!/^\d+$/.test(value)) {
+            setPageSize(10);
+            setPageSizeInput('10');
+            return;
+        }
+        const n = Number(value);
+        if (!Number.isInteger(n) || n <= 0) {
+            setPageSize(10);
+            setPageSizeInput('10');
+            return;
+        }
+        setPageSize(n);
+        setPageSizeInput(String(n));
+    }, []);
+
     const handlePageSizeInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        const v = e.target.value;
+        const v = e.target.value.replace(/[^\d]/g, '');
         setPageSizeInput(v);
-        const n = parseInt(v, 10);
-        if (Number.isInteger(n) && n > 0) {
-            setPageSize(n);
+        setIsRowsMenuOpen(true);
+        if (v) {
+            const n = Number(v);
+            if (n > 0) {
+                setPageSize(n);
+            }
         }
     };
 
     const handlePageSizeBlur = () => {
-        const n = parseInt(pageSizeInput, 10);
-        if (!Number.isInteger(n) || n <= 0) {
-            setPageSize(10);
-            setPageSizeInput('10');
-        }
+        setIsRowsMenuOpen(false);
+        commitPageSizeInput(pageSizeInput);
+    };
+
+    const handleRowsOptionSelect = (value: number) => {
+        setPageSize(value);
+        setPageSizeInput(String(value));
+        setIsRowsMenuOpen(false);
     };
 
     const [selectedIds, setSelectedIds] = useState<Record<string, boolean>>({});
     const [selectionBox, setSelectionBox] = useState<SelectionBox | null>(null);
 
     const rowRefs = useRef<Record<string, HTMLDivElement | null>>({});
+    const rowsControlRef = useRef<HTMLDivElement | null>(null);
     const selectedIdsRef = useRef<Record<string, boolean>>({});
     const dragSelectionRef = useRef<DragSelectionState | null>(null);
     const suppressRowClickUntilRef = useRef(0);
@@ -103,6 +129,18 @@ export const StudentsModule = ({ sectionId, courseId, hideHeader = false }: Stud
     useEffect(() => {
         selectedIdsRef.current = selectedIds;
     }, [selectedIds]);
+
+    useEffect(() => {
+        const handleOutsideRowsMenuClick = (event: MouseEvent) => {
+            if (!rowsControlRef.current) return;
+            if (rowsControlRef.current.contains(event.target as Node)) return;
+            setIsRowsMenuOpen(false);
+            commitPageSizeInput(pageSizeInput);
+        };
+
+        window.addEventListener('mousedown', handleOutsideRowsMenuClick);
+        return () => window.removeEventListener('mousedown', handleOutsideRowsMenuClick);
+    }, [pageSizeInput, commitPageSizeInput]);
 
     useEffect(() => {
         loadData();
@@ -706,30 +744,71 @@ export const StudentsModule = ({ sectionId, courseId, hideHeader = false }: Stud
                     <div className={styles.topBarLeft}>
                         <Button size="sm" variant="success" className={styles.bulkActionButton} onClick={() => bulkChangeStatus(true)} disabled={!selectedCount}>Enroll Selected</Button>
                         <Button size="sm" variant="danger" className={styles.bulkActionButton} onClick={() => bulkChangeStatus(false)} disabled={!selectedCount}>Withdraw Selected</Button>
-                        <div className={styles.topBarInfo}>{selectedCount} selected</div>
+                        {selectedCount > 0 && (
+                            <div className={styles.selectionBadgeWrap}>
+                                <div className={styles.selectedBadge}>
+                                    <div className={[styles.selectedDot, styles.selectedDotActive].join(' ')} />
+                                    <span className={[styles.selectedText, styles.selectedTextActive].join(' ')}>
+                                        {selectedCount} Selected
+                                    </span>
+                                </div>
+                            </div>
+                        )}
                     </div>
                     <div className={styles.topBarRight}>
                         <div className={styles.pagination}>
-                            <div className={styles.rowsControl}>
+                            <div className={styles.rowsControl} ref={rowsControlRef}>
                                 <label htmlFor="rows-per-page" className={styles.rowsLabel}>Rows:</label>
-                                <input
-                                    id="rows-per-page"
-                                    type="number"
-                                    min={1}
-                                    list="rows-options"
-                                    value={pageSizeInput}
-                                    onChange={handlePageSizeInputChange}
-                                    onBlur={handlePageSizeBlur}
-                                    className={styles.rowsInput}
-                                    aria-label="Rows per page"
-                                />
-                                <datalist id="rows-options">
-                                    <option value="5" />
-                                    <option value="10" />
-                                    <option value="25" />
-                                    <option value="50" />
-                                    <option value="100" />
-                                </datalist>
+                                <div className={styles.rowsPicker}>
+                                    <input
+                                        id="rows-per-page"
+                                        type="text"
+                                        inputMode="numeric"
+                                        pattern="[0-9]*"
+                                        value={pageSizeInput}
+                                        onChange={handlePageSizeInputChange}
+                                        onFocus={() => setIsRowsMenuOpen(true)}
+                                        onClick={() => setIsRowsMenuOpen(true)}
+                                        onBlur={handlePageSizeBlur}
+                                        onKeyDown={(e) => {
+                                            if (e.key === 'Escape') {
+                                                setIsRowsMenuOpen(false);
+                                            }
+                                        }}
+                                        className={styles.rowsInput}
+                                        aria-label="Rows per page"
+                                        aria-expanded={isRowsMenuOpen}
+                                        aria-controls="rows-options-list"
+                                        aria-haspopup="listbox"
+                                    />
+                                    <button
+                                        type="button"
+                                        className={styles.rowsPickerButton}
+                                        onMouseDown={e => e.preventDefault()}
+                                        onClick={() => setIsRowsMenuOpen(open => !open)}
+                                        aria-label="Toggle rows options"
+                                    >
+                                        <ChevronDown size={14} />
+                                    </button>
+                                    {isRowsMenuOpen && (
+                                        <div id="rows-options-list" className={styles.rowsOptions} role="listbox" aria-label="Rows options">
+                                            {rowsPresetOptions.map(option => (
+                                                <button
+                                                    key={option}
+                                                    type="button"
+                                                    className={[
+                                                        styles.rowsOption,
+                                                        pageSize === option ? styles.rowsOptionActive : ''
+                                                    ].filter(Boolean).join(' ')}
+                                                    onMouseDown={e => e.preventDefault()}
+                                                    onClick={() => handleRowsOptionSelect(option)}
+                                                >
+                                                    {option}
+                                                </button>
+                                            ))}
+                                        </div>
+                                    )}
+                                </div>
                             </div>
                             <Button size="sm" variant="ghost" onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page === 1}>Prev</Button>
                             <div className={styles.pageNumbers}>

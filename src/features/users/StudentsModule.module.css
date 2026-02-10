@@ -148,10 +148,43 @@
     align-items: center;
 }
 
-.topBarInfo {
-    font-size: 0.85rem;
-    color: var(--text-secondary);
-    margin-left: 0.5rem;
+.selectionBadgeWrap {
+    margin-left: 0.4rem;
+}
+
+.selectedBadge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+    padding: 0;
+    border: none;
+    background-color: transparent;
+    min-height: 0;
+    border-radius: 0;
+}
+
+.selectedDot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    align-self: center;
+    position: relative;
+    top: -1px;
+}
+
+.selectedDotActive {
+    background-color: var(--primary);
+    animation: pulse 2s infinite;
+}
+
+.selectedText {
+    font-size: 0.82rem;
+    font-weight: 700;
+    line-height: 1;
+}
+
+.selectedTextActive {
+    color: var(--primary);
 }
 
 .topBarRight {
@@ -274,6 +307,7 @@
     align-items: center;
     gap: 0.5rem;
     margin-right: 0.5rem;
+    position: relative;
 }
 
 .rowsLabel {
@@ -289,14 +323,80 @@
     font-weight: 600;
 }
 
+.rowsPicker {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+}
+
 .rowsInput {
-    padding: 0.25rem 0.5rem;
+    padding: 0.35rem 0.65rem;
     border: 1px solid var(--border-color);
     background: var(--bg-card);
-    border-radius: 0.35rem;
-    font-weight: 600;
-    width: 5.2ch;
+    border-radius: 0.45rem;
+    font-weight: 400;
+    width: 8ch;
+    min-width: 4.75rem;
     text-align: center;
+    font-size: 0.92rem;
+    padding-right: 1.65rem;
+}
+
+.rowsPickerButton {
+    position: absolute;
+    right: 0.2rem;
+    top: 50%;
+    transform: translateY(-50%);
+    border: none;
+    background: transparent;
+    color: var(--text-secondary);
+    cursor: pointer;
+    padding: 0.2rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 0.25rem;
+}
+
+.rowsPickerButton:hover {
+    background-color: var(--bg-hover);
+}
+
+.rowsOptions {
+    position: absolute;
+    top: calc(100% + 0.35rem);
+    left: 0;
+    min-width: 100%;
+    background-color: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: 0.45rem;
+    box-shadow: var(--shadow-md);
+    padding: 0.2rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.15rem;
+    z-index: 40;
+}
+
+.rowsOption {
+    border: none;
+    background: transparent;
+    color: var(--text-primary);
+    font-weight: 600;
+    font-size: 0.88rem;
+    text-align: left;
+    padding: 0.32rem 0.5rem;
+    border-radius: 0.3rem;
+    cursor: pointer;
+}
+
+.rowsOption:hover {
+    background-color: var(--bg-hover);
+}
+
+.rowsOptionActive {
+    background-color: #e6f4ff;
+    color: #0369a1;
 }
 
 .paginationButton {
@@ -606,4 +706,9 @@
 :global(body.students-drag-selecting) {
     user-select: none;
     cursor: crosshair;
+}
+
+@keyframes pulse {
+    0%, 100% { transform: scale(1); opacity: 0.6; }
+    50% { transform: scale(1.2); opacity: 1; }
 }
