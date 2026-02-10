@@ -334,6 +334,10 @@
     text-align: center;
 }
 
+.tableRowSelected {
+    background-color: #e0f2fe;
+}
+
 .expandHeader, .expandCell {
     display: flex;
     align-items: center;
@@ -588,4 +592,18 @@
     justify-content: flex-end;
     gap: 1rem;
     margin-top: 1.5rem;
+}
+
+.dragSelectionBox {
+    position: fixed;
+    border: 1px solid #0ea5e9;
+    background-color: rgba(14, 165, 233, 0.16);
+    border-radius: 0.25rem;
+    pointer-events: none;
+    z-index: 1000;
+}
+
+:global(body.students-drag-selecting) {
+    user-select: none;
+    cursor: crosshair;
 }

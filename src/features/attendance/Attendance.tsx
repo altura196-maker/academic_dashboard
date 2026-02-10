@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { useBlocker, useLocation } from 'react-router-dom';
 import { useConfirmation } from '../../shared/hooks/useConfirmation';
 import { StorageService } from '../../shared/utils/storage';
@@ -8,6 +8,20 @@ import { Button } from '../../shared/components/Button';
 import { Save, Calendar, CheckSquare, XSquare, ChevronRight, ChevronDown, LayoutGrid, ArrowLeft, History, UserCheck, Users, Search, Clock, MapPin } from 'lucide-react';
 import { PageHeader } from '../../shared/components/PageHeader';
 import styles from './Attendance.module.css';
+
+interface SelectionBox {
+    left: number;
+    top: number;
+    width: number;
+    height: number;
+}
+
+interface DragSelectionState {
+    startX: number;
+    startY: number;
+    hasDragged: boolean;
+    initialSelected: string[];
+}
 
 export const Attendance = () => {
     // Data
@@ -38,11 +52,20 @@ export const Attendance = () => {
     const [searchTerm, setSearchTerm] = useState('');
     const [selectedIds, setSelectedIds] = useState<string[]>([]);
     const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
+    const [selectionBox, setSelectionBox] = useState<SelectionBox | null>(null);
     const persistedRecords = useRef<{ [studentId: string]: boolean }>({});
+    const studentChipRefs = useRef<Record<string, HTMLDivElement | null>>({});
+    const selectedIdsRef = useRef<string[]>([]);
+    const dragSelectionRef = useRef<DragSelectionState | null>(null);
+    const suppressChipClickUntilRef = useRef(0);
 
     useEffect(() => {
         loadInitialData();
     }, []);
+
+    useEffect(() => {
+        selectedIdsRef.current = selectedIds;
+    }, [selectedIds]);
 
     useEffect(() => {
         setSearchTerm('');
@@ -298,6 +321,130 @@ export const Attendance = () => {
             setSelectedIds(targetStudents.map(s => s.id));
         }
     };
+
+    const isMarkingView = mainTab === 'hierarchy' && viewMode === 'dashboard' && activeTab === 'mark';
+
+    const setStudentChipRef = useCallback((studentId: string, node: HTMLDivElement | null) => {
+        if (node) {
+            studentChipRefs.current[studentId] = node;
+            return;
+        }
+        delete studentChipRefs.current[studentId];
+    }, []);
+
+    const isInteractiveElement = (target: EventTarget | null) => {
+        if (!(target instanceof Element)) return false;
+        return Boolean(target.closest('button, input, select, textarea, a, label, .modal-backdrop, .modal-panel'));
+    };
+
+    const normalizeSelectionBox = (startX: number, startY: number, endX: number, endY: number): SelectionBox => ({
+        left: Math.min(startX, endX),
+        top: Math.min(startY, endY),
+        width: Math.abs(endX - startX),
+        height: Math.abs(endY - startY)
+    });
+
+    const boxIntersectsRect = (box: SelectionBox, rect: DOMRect) => {
+        const boxRight = box.left + box.width;
+        const boxBottom = box.top + box.height;
+        return box.left <= rect.right && boxRight >= rect.left && box.top <= rect.bottom && boxBottom >= rect.top;
+    };
+
+    const isSameSelection = (a: string[], b: string[]) => {
+        if (a.length !== b.length) return false;
+        const setA = new Set(a);
+        for (const id of b) {
+            if (!setA.has(id)) return false;
+        }
+        return true;
+    };
+
+    const shouldSuppressChipClick = () => performance.now() < suppressChipClickUntilRef.current;
+
+    const handleChipToggle = (studentId: string) => {
+        if (shouldSuppressChipClick()) return;
+        toggleSelection(studentId);
+    };
+
+    useEffect(() => {
+        let activeMouseMove: ((event: MouseEvent) => void) | null = null;
+        let activeMouseUp: ((event: MouseEvent) => void) | null = null;
+
+        const detachDragListeners = () => {
+            if (activeMouseMove) {
+                window.removeEventListener('mousemove', activeMouseMove, true);
+                activeMouseMove = null;
+            }
+            if (activeMouseUp) {
+                window.removeEventListener('mouseup', activeMouseUp, true);
+                activeMouseUp = null;
+            }
+        };
+
+        const finishDragSelection = (didDrag: boolean) => {
+            detachDragListeners();
+            dragSelectionRef.current = null;
+            document.body.classList.remove('attendance-drag-selecting');
+            setSelectionBox(null);
+            if (didDrag) {
+                suppressChipClickUntilRef.current = performance.now() + 160;
+            }
+        };
+
+        const handleMouseDown = (event: MouseEvent) => {
+            if (!isMarkingView || event.button !== 0 || isInteractiveElement(event.target)) return;
+
+            dragSelectionRef.current = {
+                startX: event.clientX,
+                startY: event.clientY,
+                hasDragged: false,
+                initialSelected: [...selectedIdsRef.current]
+            };
+
+            activeMouseMove = (moveEvent: MouseEvent) => {
+                const dragState = dragSelectionRef.current;
+                if (!dragState) return;
+
+                const deltaX = moveEvent.clientX - dragState.startX;
+                const deltaY = moveEvent.clientY - dragState.startY;
+                if (!dragState.hasDragged && Math.hypot(deltaX, deltaY) < 4) return;
+
+                if (!dragState.hasDragged) {
+                    dragState.hasDragged = true;
+                    document.body.classList.add('attendance-drag-selecting');
+                }
+
+                moveEvent.preventDefault();
+                const box = normalizeSelectionBox(dragState.startX, dragState.startY, moveEvent.clientX, moveEvent.clientY);
+                setSelectionBox(box);
+
+                const nextSelectionSet = new Set(dragState.initialSelected);
+                Object.entries(studentChipRefs.current).forEach(([studentId, node]) => {
+                    if (!node) return;
+                    if (boxIntersectsRect(box, node.getBoundingClientRect())) {
+                        nextSelectionSet.add(studentId);
+                    }
+                });
+
+                const nextSelection = Array.from(nextSelectionSet);
+                setSelectedIds(prev => (isSameSelection(prev, nextSelection) ? prev : nextSelection));
+            };
+
+            activeMouseUp = () => {
+                finishDragSelection(!!dragSelectionRef.current?.hasDragged);
+            };
+
+            window.addEventListener('mousemove', activeMouseMove, true);
+            window.addEventListener('mouseup', activeMouseUp, true);
+        };
+
+        window.addEventListener('mousedown', handleMouseDown, true);
+
+        return () => {
+            window.removeEventListener('mousedown', handleMouseDown, true);
+            finishDragSelection(!!dragSelectionRef.current?.hasDragged);
+        };
+    }, [isMarkingView]);
 
     const handleNavigate = async (callback: () => void) => {
         if (hasUnsavedChanges || selectedIds.length > 0) {
@@ -621,7 +768,9 @@ export const Attendance = () => {
                                     return (
                                         <div
                                             key={student.id}
-                                            onClick={() => toggleSelection(student.id)}
+                                            ref={node => setStudentChipRef(student.id, node)}
+                                            data-student-id={student.id}
+                                            onClick={() => handleChipToggle(student.id)}
                                             role="button"
                                             tabIndex={0}
                                             aria-pressed={isSelected}
@@ -1089,6 +1238,19 @@ export const Attendance = () => {
                     renderDrilldownHistory()
                 )
             }
+
+            {selectionBox && (
+                <div
+                    className={styles.dragSelectionBox}
+                    style={{
+                        left: selectionBox.left,
+                        top: selectionBox.top,
+                        width: selectionBox.width,
+                        height: selectionBox.height
+                    }}
+                    aria-hidden
+                />
+            )}
         </div >
     );
 };

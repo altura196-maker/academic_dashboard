@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { StorageService } from '../../shared/utils/storage';
 import { Student, Section, Attendance, Enrollment } from '../../shared/utils/types';
 import { Button } from '../../shared/components/Button';
@@ -13,6 +13,20 @@ interface StudentsModuleProps {
     sectionId?: string;
     courseId?: string;
     hideHeader?: boolean;
+}
+
+interface SelectionBox {
+    left: number;
+    top: number;
+    width: number;
+    height: number;
+}
+
+interface DragSelectionState {
+    startX: number;
+    startY: number;
+    hasDragged: boolean;
+    initialSelected: Record<string, boolean>;
 }
 
 import { PageHeader } from '../../shared/components/PageHeader';
@@ -79,6 +93,16 @@ export const StudentsModule = ({ sectionId, courseId, hideHeader = false }: Stud
     };
 
     const [selectedIds, setSelectedIds] = useState<Record<string, boolean>>({});
+    const [selectionBox, setSelectionBox] = useState<SelectionBox | null>(null);
+
+    const rowRefs = useRef<Record<string, HTMLDivElement | null>>({});
+    const selectedIdsRef = useRef<Record<string, boolean>>({});
+    const dragSelectionRef = useRef<DragSelectionState | null>(null);
+    const suppressRowClickUntilRef = useRef(0);
+
+    useEffect(() => {
+        selectedIdsRef.current = selectedIds;
+    }, [selectedIds]);
 
     useEffect(() => {
         loadData();
@@ -420,6 +444,128 @@ export const StudentsModule = ({ sectionId, courseId, hideHeader = false }: Stud
 
     const selectedCount = Object.values(selectedIds).filter(Boolean).length;
 
+    const setRowRef = useCallback((studentId: string, node: HTMLDivElement | null) => {
+        if (node) {
+            rowRefs.current[studentId] = node;
+            return;
+        }
+        delete rowRefs.current[studentId];
+    }, []);
+
+    const isInteractiveElement = (target: EventTarget | null) => {
+        if (!(target instanceof Element)) return false;
+        return Boolean(target.closest('button, input, select, textarea, a, label, .modal-backdrop, .modal-panel'));
+    };
+
+    const isSameSelection = (a: Record<string, boolean>, b: Record<string, boolean>) => {
+        const keys = new Set([...Object.keys(a), ...Object.keys(b)]);
+        for (const key of keys) {
+            if (!!a[key] !== !!b[key]) return false;
+        }
+        return true;
+    };
+
+    const normalizeSelectionBox = (startX: number, startY: number, endX: number, endY: number): SelectionBox => ({
+        left: Math.min(startX, endX),
+        top: Math.min(startY, endY),
+        width: Math.abs(endX - startX),
+        height: Math.abs(endY - startY)
+    });
+
+    const boxIntersectsRect = (box: SelectionBox, rect: DOMRect) => {
+        const boxRight = box.left + box.width;
+        const boxBottom = box.top + box.height;
+        return box.left <= rect.right && boxRight >= rect.left && box.top <= rect.bottom && boxBottom >= rect.top;
+    };
+
+    const shouldSuppressRowClick = () => performance.now() < suppressRowClickUntilRef.current;
+
+    const handleRowExpand = (studentId: string) => {
+        if (shouldSuppressRowClick()) return;
+        toggleStudentExpand(studentId);
+    };
+
+    useEffect(() => {
+        let activeMouseMove: ((event: MouseEvent) => void) | null = null;
+        let activeMouseUp: ((event: MouseEvent) => void) | null = null;
+
+        const detachDragListeners = () => {
+            if (activeMouseMove) {
+                window.removeEventListener('mousemove', activeMouseMove, true);
+                activeMouseMove = null;
+            }
+            if (activeMouseUp) {
+                window.removeEventListener('mouseup', activeMouseUp, true);
+                activeMouseUp = null;
+            }
+        };
+
+        const finishDragSelection = (didDrag: boolean) => {
+            detachDragListeners();
+            dragSelectionRef.current = null;
+            document.body.classList.remove('students-drag-selecting');
+            setSelectionBox(null);
+            if (didDrag) {
+                suppressRowClickUntilRef.current = performance.now() + 160;
+            }
+        };
+
+        const handleMouseDown = (event: MouseEvent) => {
+            if (event.button !== 0 || isModalOpen || isInteractiveElement(event.target)) return;
+
+            dragSelectionRef.current = {
+                startX: event.clientX,
+                startY: event.clientY,
+                hasDragged: false,
+                initialSelected: { ...selectedIdsRef.current }
+            };
+
+            activeMouseMove = (moveEvent: MouseEvent) => {
+                const dragState = dragSelectionRef.current;
+                if (!dragState) return;
+
+                const deltaX = moveEvent.clientX - dragState.startX;
+                const deltaY = moveEvent.clientY - dragState.startY;
+
+                if (!dragState.hasDragged && Math.hypot(deltaX, deltaY) < 4) return;
+
+                if (!dragState.hasDragged) {
+                    dragState.hasDragged = true;
+                    document.body.classList.add('students-drag-selecting');
+                }
+
+                moveEvent.preventDefault();
+
+                const box = normalizeSelectionBox(dragState.startX, dragState.startY, moveEvent.clientX, moveEvent.clientY);
+                setSelectionBox(box);
+
+                const nextSelection = { ...dragState.initialSelected };
+                Object.entries(rowRefs.current).forEach(([studentId, node]) => {
+                    if (!node) return;
+                    if (boxIntersectsRect(box, node.getBoundingClientRect())) {
+                        nextSelection[studentId] = true;
+                    }
+                });
+
+                setSelectedIds(prev => (isSameSelection(prev, nextSelection) ? prev : nextSelection));
+            };
+
+            activeMouseUp = () => {
+                finishDragSelection(!!dragSelectionRef.current?.hasDragged);
+            };
+
+            window.addEventListener('mousemove', activeMouseMove, true);
+            window.addEventListener('mouseup', activeMouseUp, true);
+        };
+
+        window.addEventListener('mousedown', handleMouseDown, true);
+
+        return () => {
+            window.removeEventListener('mousedown', handleMouseDown, true);
+            finishDragSelection(!!dragSelectionRef.current?.hasDragged);
+        };
+    }, [isModalOpen]);
+
     const changeSort = (by: typeof sortBy) => {
         if (sortBy === by) {
             setSortDir(d => (d === 'asc' ? 'desc' : 'asc'));
@@ -648,17 +794,20 @@ export const StudentsModule = ({ sectionId, courseId, hideHeader = false }: Stud
                         return (
                             <React.Fragment key={student.id}>
                                 <div
+                                    ref={node => setRowRef(student.id, node)}
+                                    data-student-id={student.id}
                                     className={[
                                         styles.tableRow,
+                                        selectedIds[student.id] ? styles.tableRowSelected : '',
                                         isExpanded ? styles.tableRowExpanded : '',
                                         !globalActive ? styles.tableRowInactive : ''
                                     ].filter(Boolean).join(' ')}
-                                    onClick={() => toggleStudentExpand(student.id)}
+                                    onClick={() => handleRowExpand(student.id)}
                                     role="button"
                                     tabIndex={0}
                                     onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggleStudentExpand(student.id); } }}
                                 >
-                                    <div className={styles.expandCell} onClick={e => { e.stopPropagation(); toggleStudentExpand(student.id); }}>
+                                    <div className={styles.expandCell} onClick={e => { e.stopPropagation(); handleRowExpand(student.id); }}>
                                         {isExpanded ? <ChevronDown size={20} color="#64748b" /> : <ChevronRight size={20} color="#94a3b8" />}
                                     </div>
 
@@ -801,6 +950,19 @@ export const StudentsModule = ({ sectionId, courseId, hideHeader = false }: Stud
 
 
             </div>
+
+            {selectionBox && (
+                <div
+                    className={styles.dragSelectionBox}
+                    style={{
+                        left: selectionBox.left,
+                        top: selectionBox.top,
+                        width: selectionBox.width,
+                        height: selectionBox.height
+                    }}
+                    aria-hidden
+                />
+            )}
 
             {/* Add/Edit Modal */}
             <Modal
