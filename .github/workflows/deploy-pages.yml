@@ -52,7 +52,7 @@ jobs:
             sleep 1
           done
           curl -sSf http://127.0.0.1:4173/academic_dashboard/ >/dev/null
-          PREVIEW_ORIGIN=http://127.0.0.1:4173 npm exec --yes --package=@playwright/test -- playwright test tests/gh-pages.spec.ts --reporter=line
+          PREVIEW_ORIGIN=http://127.0.0.1:4173 npx playwright test
 
       - name: Upload verified Pages artifact
         uses: actions/upload-pages-artifact@v3
