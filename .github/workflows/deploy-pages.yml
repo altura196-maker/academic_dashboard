@@ -37,21 +37,27 @@ jobs:
         run: npm run build
 
       - name: Install Playwright
-        run: npx playwright install --with-deps
+        run: npm exec --yes --package=@playwright/test -- playwright install --with-deps
 
-      - name: Serve production build
+      - name: Serve production build and run Playwright checks
         run: |
           npx vite preview --host 127.0.0.1 --port 4173 --strictPort &
-          for i in {1..20}; do
-            if curl -sSf http://127.0.0.1:4173 >/dev/null; then
+          PREVIEW_PID=$!
+          trap "kill $PREVIEW_PID" EXIT
+
+          for i in {1..30}; do
+            if curl -sSf http://127.0.0.1:4173/academic_dashboard/ >/dev/null; then
               break
             fi
             sleep 1
           done
-          curl -sSf http://127.0.0.1:4173 >/dev/null
+          curl -sSf http://127.0.0.1:4173/academic_dashboard/ >/dev/null
+          PREVIEW_ORIGIN=http://127.0.0.1:4173 npm exec --yes --package=@playwright/test -- playwright test tests/gh-pages.spec.ts --reporter=line
 
-      - name: Run Playwright SPA checks
-        run: npx playwright test tests/gh-pages.spec.ts
+      - name: Upload verified Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: dist
 
   deploy:
     name: Deploy to GitHub Pages
@@ -64,14 +70,6 @@ jobs:
       url: ${{ steps.deployment.outputs.page_url }}
 
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Upload artifact
-        uses: actions/upload-pages-artifact@v3
-        with:
-          path: dist
-
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v4
