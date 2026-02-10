@@ -1,0 +1,591 @@
+.buttonIcon {
+    margin-right: 0.5rem;
+}
+
+.tableCard {
+    border-radius: 0.5rem;
+    overflow: hidden;
+    border: 1px solid var(--border-color);
+    background-color: var(--bg-card);
+    box-shadow: var(--shadow-sm);
+    --students-grid: 40px minmax(260px, 1.4fr) minmax(260px, 1.2fr) 80px 80px 90px minmax(220px, 1fr) 200px;
+}
+
+.tableHeader {
+    display: grid;
+    grid-template-columns: var(--students-grid);
+    gap: 0.5rem;
+    background-color: #f8fafc;
+    padding: 0.75rem 1rem;
+    border-bottom: 1px solid var(--border-color);
+    color: #64748b;
+    font-weight: 600;
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    align-items: center;
+    text-align: center;
+}
+
+.headerControls {
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
+}
+
+.headerActions {
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
+}
+
+.countBadge {
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+    margin-left: 0.5rem;
+    font-weight: 500;
+}
+
+.checkbox {
+    width: 16px;
+    height: 16px;
+}
+
+.avatar {
+    width: 36px;
+    height: 36px;
+    border-radius: 999px;
+    background-color: #e2e8f0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    color: #1f2937;
+    margin-right: 0.5rem;
+}
+
+.nameCell {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.nameText {
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.cellMutedSmall {
+    font-size: 0.75rem;
+    color: var(--text-secondary);
+}
+
+.unenrolledFlag {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    padding: 0.1rem 0.45rem;
+    border-radius: 999px;
+    font-size: 0.7rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: #9a3412;
+    background: #ffedd5;
+    border: 1px solid #fdba74;
+}
+
+.smallCell {
+    font-size: 0.875rem;
+    text-align: center;
+    font-variant-numeric: tabular-nums;
+}
+
+.centerCell {
+    font-size: 0.875rem;
+    text-align: left;
+}
+
+.attendanceCell {
+    font-size: 0.875rem;
+}
+
+.emptyState {
+    padding: 2rem;
+    text-align: center;
+    color: var(--text-secondary);
+}
+
+.tableFooter {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.75rem 1rem;
+    border-top: 1px solid var(--border-color);
+    gap: 1rem;
+}
+
+.tableTopBar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.75rem 1rem;
+    border-bottom: 1px solid var(--border-color);
+    gap: 1rem;
+    position: sticky;
+    top: 0;
+    z-index: 20;
+    background: var(--bg-card);
+    margin: 0;
+    box-shadow: 0 1px 0 rgba(0,0,0,0.03);
+}
+
+.topBarLeft {
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
+}
+
+.topBarInfo {
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+    margin-left: 0.5rem;
+}
+
+.topBarRight {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 1rem;
+    flex-wrap: wrap;
+}
+
+.bulkActionButton {
+    min-width: 150px;
+    justify-content: center;
+    font-weight: 600;
+    white-space: nowrap;
+    border-radius: 0.5rem;
+}
+
+.statusToggleButton {
+    min-width: 96px;
+    justify-content: center;
+    font-weight: 600;
+    white-space: nowrap;
+    font-size: 0.85rem;
+    min-height: 2rem;
+    padding: 0.35rem 0.75rem;
+    border-radius: 0.5rem;
+}
+
+.insightsGrid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 0.75rem;
+    margin: 1rem 0;
+}
+
+.insightCard {
+    display: flex;
+    gap: 0.75rem;
+    align-items: center;
+    padding: 0.9rem 1rem;
+    border: 1px solid var(--border-color);
+    border-radius: 0.65rem;
+    background-color: var(--bg-card);
+    box-shadow: var(--shadow-sm);
+}
+
+.insightIcon {
+    width: 36px;
+    height: 36px;
+    border-radius: 0.75rem;
+    display: grid;
+    place-items: center;
+    color: #0f172a;
+}
+
+.insightIcon[data-tone="primary"] { background: #e0f2fe; color: #0ea5e9; }
+.insightIcon[data-tone="success"] { background: #ecfdf3; color: #16a34a; }
+.insightIcon[data-tone="warning"] { background: #fef9c3; color: #ca8a04; }
+.insightIcon[data-tone="info"] { background: #ede9fe; color: #7c3aed; }
+.insightIcon[data-tone="accent"] { background: #fff1f2; color: #e11d48; }
+
+.insightLabel {
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+}
+
+.insightValue {
+    font-size: 1.3rem;
+    font-weight: 700;
+    color: var(--text-primary);
+}
+
+.filtersBar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    margin: 0 0 0.75rem;
+}
+
+
+.chipGroup {
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
+}
+
+.filterChip {
+    border: 1px solid var(--border-color);
+    background: #f8fafc;
+    color: var(--text-secondary);
+    padding: 0.35rem 0.8rem;
+    border-radius: 999px;
+    cursor: pointer;
+    font-weight: 600;
+    transition: all 0.12s ease;
+}
+
+.filterChip:hover {
+    border-color: #cbd5e1;
+}
+
+.filterChipActive {
+    background: #e0f2fe;
+    color: #0ea5e9;
+    border-color: #0ea5e9;
+    box-shadow: 0 4px 10px rgba(14, 165, 233, 0.15);
+}
+
+.pagination {
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
+}
+
+.rowsControl {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-right: 0.5rem;
+}
+
+.rowsLabel {
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+}
+
+.rowsSelect {
+    padding: 0.25rem 0.5rem;
+    border: 1px solid var(--border-color);
+    background: var(--bg-card);
+    border-radius: 0.35rem;
+    font-weight: 600;
+}
+
+.rowsInput {
+    padding: 0.25rem 0.5rem;
+    border: 1px solid var(--border-color);
+    background: var(--bg-card);
+    border-radius: 0.35rem;
+    font-weight: 600;
+    width: 5.2ch;
+    text-align: center;
+}
+
+.paginationButton {
+    border: none;
+    background: transparent;
+    padding: 0.35rem 0.6rem;
+    cursor: pointer;
+    border-radius: 0.25rem;
+}
+
+.pageSelect {
+    border: 1px solid var(--border-color);
+    background: #e6f4ff;
+    color: #0369a1;
+    padding: 0.3rem 0.5rem;
+    border-radius: 0.25rem;
+    font-weight: 600;
+}
+
+.pageNumActive {
+    background-color: #e6f4ff;
+    color: #0369a1;
+}
+
+
+.tableRow {
+    display: grid;
+    grid-template-columns: var(--students-grid);
+    gap: 0.5rem;
+    padding: 0.9rem 1rem;
+    border-bottom: 1px solid var(--border-color);
+    align-items: center;
+    transition: background-color 0.12s;
+    cursor: pointer;
+    text-align: center;
+}
+
+.expandHeader, .expandCell {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.expandCell {
+    padding: 0.25rem;
+}
+
+.nameHeader, .centerHeader, .smallHeader {
+    cursor: pointer;
+}
+
+.smallHeader {
+    text-align: center;
+}
+
+.actionsHeader {
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
+    justify-content: flex-end;
+}
+
+.actionGroup {
+    display: flex;
+    gap: 0.5rem;
+    justify-content: flex-end;
+    align-items: center;
+}
+
+.actionCheckbox {
+    width: 16px;
+    height: 16px;
+}
+
+.tableRow:focus {
+    outline: 2px solid rgba(3, 105, 161, 0.12);
+    outline-offset: 2px;
+}
+
+
+.tableRowExpanded {
+    background-color: #f1f5f9;
+}
+
+.tableRowInactive {
+    opacity: 1;
+}
+
+.expandButton {
+    padding: 0;
+}
+
+.nameButton {
+    padding: 0;
+    justify-content: flex-start;
+    color: var(--text-primary);
+}
+
+.cellMuted {
+    font-size: 0.875rem;
+    color: var(--text-secondary);
+}
+
+.cellText {
+    font-size: 0.875rem;
+}
+
+.attendanceRow {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.attendanceProgress {
+    flex: 1;
+    height: 6px;
+    border-radius: 0.25rem;
+    overflow: hidden;
+    background-color: #e2e8f0;
+    appearance: none;
+}
+
+.attendanceProgress::-webkit-progress-bar {
+    background-color: #e2e8f0;
+    border-radius: 0.25rem;
+}
+
+.attendanceProgress::-webkit-progress-value {
+    background-color: var(--progress-color, #10b981);
+    border-radius: 0.25rem;
+}
+
+.attendanceProgress::-moz-progress-bar {
+    background-color: var(--progress-color, #10b981);
+    border-radius: 0.25rem;
+}
+
+.attendanceProgresshigh {
+    --progress-color: #10b981;
+}
+
+.attendanceProgressmid {
+    --progress-color: #f59e0b;
+}
+
+.attendanceProgresslow {
+    --progress-color: #ef4444;
+}
+
+.attendanceValue {
+    font-weight: 600;
+    font-size: 0.75rem;
+}
+
+.attendanceValuehigh {
+    color: #10b981;
+}
+
+.attendanceValuemid {
+    color: #f59e0b;
+}
+
+.attendanceValuelow {
+    color: #ef4444;
+}
+
+.attendanceEmpty {
+    color: var(--text-secondary);
+    font-size: 0.75rem;
+}
+
+.actionGroup {
+    display: flex;
+    gap: 0.5rem;
+    justify-content: flex-end;
+    align-items: center;
+}
+
+.expandedPanel {
+    padding: 2rem;
+    background-color: var(--bg-primary);
+    border-bottom: 1px solid var(--border-color);
+}
+
+.expandedGrid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 2rem;
+}
+
+.sectionTitle {
+    font-size: 1rem;
+    font-weight: 600;
+    margin-bottom: 1rem;
+    color: var(--text-primary);
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.sectionCard {
+    background-color: var(--bg-card);
+    padding: 1rem;
+    border-radius: 0.5rem;
+    border: 1px solid var(--border-color);
+    margin-bottom: 0.75rem;
+    box-shadow: var(--shadow-sm);
+}
+
+.sectionCardHeader {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 0.5rem;
+}
+
+.sectionTitleGroup {
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+}
+
+.sectionName {
+    font-weight: 600;
+}
+
+.sectionActions {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.statusPill {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    font-size: 0.75rem;
+    font-weight: 600;
+    letter-spacing: 0.01em;
+}
+
+.statusDot {
+    width: 6px;
+    height: 6px;
+    border-radius: 999px;
+    background: currentColor;
+}
+
+.statusText {
+    text-transform: none;
+}
+
+.statusActive {
+    color: #16a34a;
+}
+
+.statusInactive {
+    color: #64748b;
+}
+
+.sectionProgressRow {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.sectionProgressValue {
+    font-size: 0.8rem;
+    font-weight: 600;
+}
+
+.emptyCourses {
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+    padding: 1rem;
+    text-align: center;
+    border: 1px dashed var(--border-color);
+    border-radius: 0.5rem;
+}
+
+.formGrid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+}
+
+.formActions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 1rem;
+    margin-top: 1.5rem;
+}
