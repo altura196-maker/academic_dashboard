@@ -562,33 +562,10 @@
     border-radius: 0.25rem;
 }
 
-.sectionAttendanceProgresshigh {
-    --progress-color: #10b981;
-}
-
-.sectionAttendanceProgressmid {
-    --progress-color: #f59e0b;
-}
-
-.sectionAttendanceProgresslow {
-    --progress-color: #ef4444;
-}
-
 .sectionAttendanceValue {
     font-size: 0.75rem;
     font-weight: 600;
-}
-
-.sectionAttendanceValuehigh {
-    color: #10b981;
-}
-
-.sectionAttendanceValuemid {
-    color: #f59e0b;
-}
-
-.sectionAttendanceValuelow {
-    color: #ef4444;
+    color: var(--progress-text-color, var(--text-secondary));
 }
 
 .addSectionCard {
@@ -781,22 +758,11 @@
 .studentAttendanceValue {
     font-size: 0.85rem;
     font-weight: 800;
+    color: var(--progress-text-color, var(--text-secondary));
 }
 
 .studentAttendanceValuePending {
     color: white;
-}
-
-.studentAttendanceValuehigh {
-    color: #10b981;
-}
-
-.studentAttendanceValuemid {
-    color: #f59e0b;
-}
-
-.studentAttendanceValuelow {
-    color: #ef4444;
 }
 
 .studentAttendanceProgress {
@@ -837,18 +803,6 @@
 
 .studentAttendanceProgressPending::-moz-progress-bar {
     background-color: white;
-}
-
-.studentAttendanceProgresshigh {
-    --progress-color: #10b981;
-}
-
-.studentAttendanceProgressmid {
-    --progress-color: #f59e0b;
-}
-
-.studentAttendanceProgresslow {
-    --progress-color: #ef4444;
 }
 
 .studentAttendanceFootnote {

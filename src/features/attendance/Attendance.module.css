@@ -657,18 +657,7 @@
 .timelineMetricValue {
     font-size: 1.2rem;
     font-weight: 800;
-}
-
-.timelineMetrichigh {
-    color: var(--status-success);
-}
-
-.timelineMetricmid {
-    color: var(--status-warning);
-}
-
-.timelineMetriclow {
-    color: var(--status-danger);
+    color: var(--progress-text-color, var(--text-primary));
 }
 
 .timelineMetricLabel {

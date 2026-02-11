@@ -1,14 +1,13 @@
-import { AlertTriangle, BarChart3, BookOpen, LayoutPanelTop, UserCheck, UserMinus, Users } from 'lucide-react';
+import { AlertTriangle, BarChart3, LayoutPanelTop, UserCheck, UserMinus, Users } from 'lucide-react';
+import { CourseAttendanceCards } from './components/CourseAttendanceCards';
+import {
+    getDashboardBadgeClassKey,
+    getDashboardSeverityClassKey,
+    getDashboardToneClassKey
+} from '../../shared/utils/progressTone';
 import modes from './dashboardModes.module.css';
 import styles from './Dashboard3.module.css';
 import type { DashboardViewProps } from './types';
-
-const getAttendanceTone = (percentage: number) => {
-    if (percentage >= 85) return modes.toneSuccess;
-    if (percentage >= 65) return modes.toneInfo;
-    if (percentage >= 45) return modes.toneWarning;
-    return modes.toneDanger;
-};
 
 export const DashboardSplitView = ({
     stats,
@@ -17,10 +16,19 @@ export const DashboardSplitView = ({
     enrolledShare,
     notEnrolledShare,
     withdrawnShare,
-    getCoursePercentStyle,
     getFillStyle,
     getProgressStyle
 }: DashboardViewProps) => {
+    const enrolledBadgeClass = modes[getDashboardBadgeClassKey(enrolledShare.percentage)];
+    const enrolledSeverityClass = modes[getDashboardSeverityClassKey(enrolledShare.percentage)];
+    const notEnrolledBadgeClass = modes[getDashboardBadgeClassKey(notEnrolledShare.percentage)];
+    const notEnrolledSeverityClass = modes[getDashboardSeverityClassKey(notEnrolledShare.percentage)];
+    const withdrawnBadgeClass = modes[getDashboardBadgeClassKey(withdrawnShare.percentage)];
+    const withdrawnSeverityClass = modes[getDashboardSeverityClassKey(withdrawnShare.percentage)];
+    const overallToneClass = modes[getDashboardToneClassKey(overallAttendance.percentage)];
+    const overallBadgeClass = modes[getDashboardBadgeClassKey(overallAttendance.percentage)];
+    const overallSeverityClass = modes[getDashboardSeverityClassKey(overallAttendance.percentage)];
+
     return (
         <div className={styles.splitGrid}>
             <div className={styles.leftColumn}>
@@ -41,12 +49,12 @@ export const DashboardSplitView = ({
                                 <span className={`${modes.metricValue} ${styles.snapshotValue}`}>{stats.activeSections}</span>
                             </div>
                             <div className={styles.snapshotRow}>
-                                <span className={styles.snapshotLabel}>Total Students</span>
-                                <span className={`${modes.metricValue} ${styles.snapshotValue}`}>{stats.totalStudents}</span>
-                            </div>
-                            <div className={styles.snapshotRow}>
                                 <span className={styles.snapshotLabel}>Professors</span>
                                 <span className={`${modes.metricValue} ${styles.snapshotValue}`}>{stats.professors}</span>
+                            </div>
+                            <div className={styles.snapshotRow}>
+                                <span className={styles.snapshotLabel}>Total Students</span>
+                                <span className={`${modes.metricValue} ${styles.snapshotValue}`}>{stats.totalStudents}</span>
                             </div>
                         </div>
                     </div>
@@ -59,7 +67,7 @@ export const DashboardSplitView = ({
                             <h2 className={styles.panelTitle}>Student Distribution</h2>
                         </div>
 
-                        <article className={styles.distributionRow}>
+                        <article className={`${styles.distributionRow} ${enrolledSeverityClass}`}>
                             <div className={styles.distributionHeader}>
                                 <div className={modes.metricLabelRow}>
                                     <span className={`${modes.metricIcon} ${modes.metricIconSuccess}`}><UserCheck size={13} /></span>
@@ -67,7 +75,7 @@ export const DashboardSplitView = ({
                                 </div>
                                 <div className={styles.distributionValueWrap}>
                                     <span className={modes.metricValue}>{enrolledShare.count}</span>
-                                    <span className={`${modes.metricBadge} ${modes.badgeSuccess}`}>
+                                    <span className={`${modes.metricBadge} ${enrolledBadgeClass}`}>
                                         <span className={modes.metricBadgeText}>{enrolledShare.percentage}%</span>
                                     </span>
                                 </div>
@@ -77,7 +85,7 @@ export const DashboardSplitView = ({
                             </div>
                         </article>
 
-                        <article className={styles.distributionRow}>
+                        <article className={`${styles.distributionRow} ${notEnrolledSeverityClass}`}>
                             <div className={styles.distributionHeader}>
                                 <div className={modes.metricLabelRow}>
                                     <span className={`${modes.metricIcon} ${modes.metricIconInfo}`}><UserMinus size={13} /></span>
@@ -85,7 +93,7 @@ export const DashboardSplitView = ({
                                 </div>
                                 <div className={styles.distributionValueWrap}>
                                     <span className={modes.metricValue}>{notEnrolledShare.count}</span>
-                                    <span className={`${modes.metricBadge} ${modes.badgeInfo}`}>
+                                    <span className={`${modes.metricBadge} ${notEnrolledBadgeClass}`}>
                                         <span className={modes.metricBadgeText}>{notEnrolledShare.percentage}%</span>
                                     </span>
                                 </div>
@@ -95,7 +103,7 @@ export const DashboardSplitView = ({
                             </div>
                         </article>
 
-                        <article className={styles.distributionRow}>
+                        <article className={`${styles.distributionRow} ${withdrawnSeverityClass}`}>
                             <div className={styles.distributionHeader}>
                                 <div className={modes.metricLabelRow}>
                                     <span className={`${modes.metricIcon} ${modes.metricIconWarning}`}><AlertTriangle size={13} /></span>
@@ -103,7 +111,7 @@ export const DashboardSplitView = ({
                                 </div>
                                 <div className={styles.distributionValueWrap}>
                                     <span className={modes.metricValue}>{withdrawnShare.count}</span>
-                                    <span className={`${modes.metricBadge} ${modes.badgeWarning}`}>
+                                    <span className={`${modes.metricBadge} ${withdrawnBadgeClass}`}>
                                         <span className={modes.metricBadgeText}>{withdrawnShare.percentage}%</span>
                                     </span>
                                 </div>
@@ -116,7 +124,7 @@ export const DashboardSplitView = ({
                 </section>
             </div>
 
-            <section className={`${modes.dashboardCard} ${modes.toneCourse} ${styles.performanceCard}`} style={getFillStyle(overallAttendance.percentage)}>
+            <section className={`${modes.dashboardCard} ${overallToneClass} ${overallSeverityClass} ${styles.performanceCard}`} style={getFillStyle(overallAttendance.percentage)}>
                 <div className={`${modes.cardBody} ${styles.performanceBody}`}>
                     <div className={styles.performanceHeader}>
                         <div>
@@ -128,7 +136,7 @@ export const DashboardSplitView = ({
                         </div>
                         <div className={styles.overallWrap}>
                             <span className={styles.overallLabel}>Overall</span>
-                            <span className={`${modes.metricBadge} ${modes.badgeInfo}`}>
+                            <span className={`${modes.metricBadge} ${overallBadgeClass}`}>
                                 <span className={modes.metricBadgeText}>{overallAttendance.percentage}%</span>
                             </span>
                         </div>
@@ -141,40 +149,12 @@ export const DashboardSplitView = ({
                         <span>present records</span>
                     </div>
 
-                    {courseAttendance.length === 0 ? (
-                        <div className={styles.emptyState}>No attendance records available yet.</div>
-                    ) : (
-                        <div className={styles.courseList}>
-                            {courseAttendance.map(course => (
-                                <article
-                                    key={course.courseId}
-                                    className={`${modes.dashboardCard} ${modes.toneCourse} ${getAttendanceTone(course.percentage)} ${styles.courseRow}`}
-                                    style={{ ...getFillStyle(course.percentage), ...getCoursePercentStyle(course) }}
-                                >
-                                    <div className={`${modes.cardBody} ${styles.courseRowBody}`}>
-                                        <div className={styles.courseRowTop}>
-                                            <div className={modes.metricLabelRow}>
-                                                <span className={`${modes.metricIcon} ${modes.metricIconInfo}`}><BookOpen size={13} /></span>
-                                                <h3 className={styles.courseTitle}>{course.courseName}</h3>
-                                            </div>
-                                            <span className={`${modes.metricBadge} ${modes.badgeCourse}`} style={getCoursePercentStyle(course)}>
-                                                <span className={modes.metricBadgeText}>{course.percentage}%</span>
-                                            </span>
-                                        </div>
-                                        <div className={styles.courseMeta}>
-                                            <span className={styles.metaValue}>{course.present}</span>
-                                            <span>/</span>
-                                            <span className={styles.metaValue}>{course.total}</span>
-                                            <span>present</span>
-                                        </div>
-                                        <div className={modes.progressTrack}>
-                                            <div className={modes.progressFill} style={getProgressStyle(course.percentage)} />
-                                        </div>
-                                    </div>
-                                </article>
-                            ))}
-                        </div>
-                    )}
+                    <CourseAttendanceCards
+                        courseAttendance={courseAttendance}
+                        getFillStyle={getFillStyle}
+                        getProgressStyle={getProgressStyle}
+                        layout="vertical"
+                    />
                 </div>
             </section>
         </div>

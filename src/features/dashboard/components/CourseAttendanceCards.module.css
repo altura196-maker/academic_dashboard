@@ -1,0 +1,73 @@
+.courseGrid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+    gap: 0.75rem;
+}
+
+.courseList {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 0.75rem;
+}
+
+.courseCard {
+    padding: 0.8rem;
+}
+
+.courseBody {
+    display: flex;
+    flex-direction: column;
+    gap: 0.6rem;
+}
+
+.courseTopRow {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 0.6rem;
+}
+
+.courseTitle {
+    margin: 0;
+    font-size: 0.95rem;
+    line-height: 1.2;
+    color: var(--text-primary);
+}
+
+.courseMetaRow {
+    margin: 0;
+    color: var(--text-secondary);
+    display: inline-flex;
+    align-items: center;
+    gap: 0.2rem;
+    font-size: 0.82rem;
+}
+
+.courseMetaValue {
+    font-family: var(--font-heading);
+    font-size: 0.92rem;
+    line-height: 1;
+    font-weight: var(--font-weight-bold);
+    color: var(--text-primary);
+    font-variant-numeric: tabular-nums;
+}
+
+.emptyCard {
+    border: 1px dashed var(--border-color);
+    border-radius: 0.8rem;
+    background: color-mix(in srgb, var(--bg-card) 84%, var(--bg-hover) 16%);
+    color: var(--text-secondary);
+    padding: 1.2rem;
+    text-align: center;
+    font-weight: 600;
+}
+
+@media (max-width: 640px) {
+    .courseGrid {
+        grid-template-columns: 1fr;
+    }
+
+    .courseCard {
+        padding: 0.72rem;
+    }
+}

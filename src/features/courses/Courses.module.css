@@ -150,33 +150,10 @@
     border-radius: 0.25rem;
 }
 
-.attendanceProgresshigh {
-    --progress-color: #10b981;
-}
-
-.attendanceProgressmid {
-    --progress-color: #f59e0b;
-}
-
-.attendanceProgresslow {
-    --progress-color: #ef4444;
-}
-
 .attendanceValue {
     font-size: 0.75rem;
     font-weight: 600;
-}
-
-.attendanceValuehigh {
-    color: #10b981;
-}
-
-.attendanceValuemid {
-    color: #f59e0b;
-}
-
-.attendanceValuelow {
-    color: #ef4444;
+    color: var(--progress-text-color, var(--text-secondary));
 }
 
 .addCard {

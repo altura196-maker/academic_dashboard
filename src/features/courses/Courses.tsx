@@ -1,7 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, type CSSProperties } from 'react';
 import { useBlocker, useLocation } from 'react-router-dom';
 import { useConfirmation } from '../../shared/hooks/useConfirmation';
 import { StorageService } from '../../shared/utils/storage';
+import { getProgressCssVars } from '../../shared/utils/progressTone';
 import { matchesSearch } from '../../shared/utils/search';
 import { Course, Section, Enrollment, Attendance } from '../../shared/utils/types';
 import { Button } from '../../shared/components/Button';
@@ -182,11 +183,9 @@ export const Courses = () => {
         return { percentage };
     };
 
-    const getAttendanceStatus = (percentage: number) => {
-        if (percentage >= 75) return 'high';
-        if (percentage >= 50) return 'mid';
-        return 'low';
-    };
+    const getProgressStyle = (percentage: number): CSSProperties => (
+        getProgressCssVars(percentage) as CSSProperties
+    );
 
     const filteredCourses = courses.filter(c =>
         matchesSearch(searchTerm, c.name, c.description)
@@ -266,7 +265,7 @@ export const Courses = () => {
                 const attStats = getCourseAttendanceStats(course.id);
                 const studentCount = getCourseStudentCount(course.id);
                 const sectionCount = getCourseSections(course.id).length;
-                const attendanceStatus = getAttendanceStatus(attStats.percentage);
+                const attendanceStyle = getProgressStyle(attStats.percentage);
 
                 return (
                     <div
@@ -320,11 +319,12 @@ export const Courses = () => {
                             </div>
                             <div className={styles.courseAttendance}>
                                 <progress
-                                    className={`${styles.attendanceProgress} ${styles[`attendanceProgress${attendanceStatus}`]}`}
+                                    className={styles.attendanceProgress}
                                     value={attStats.percentage}
                                     max={100}
+                                    style={attendanceStyle}
                                 />
-                                <span className={`${styles.attendanceValue} ${styles[`attendanceValue${attendanceStatus}`]}`}>
+                                <span className={styles.attendanceValue} style={attendanceStyle}>
                                     {attStats.percentage}% Overall Attendance
                                 </span>
                             </div>

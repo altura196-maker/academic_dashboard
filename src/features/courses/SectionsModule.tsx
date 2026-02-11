@@ -1,5 +1,6 @@
-import React, { useState, useEffect, useMemo, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useMemo, useRef, useCallback, type CSSProperties } from 'react';
 import { StorageService } from '../../shared/utils/storage';
+import { getProgressCssVars } from '../../shared/utils/progressTone';
 import { matchesSearch } from '../../shared/utils/search';
 import { Section, Course, Professor, Student, Enrollment, Attendance } from '../../shared/utils/types';
 import { Button } from '../../shared/components/Button';
@@ -9,11 +10,9 @@ import { Trash2, Plus, Pencil, Users, User, ArrowRightLeft, UserCheck, ArrowLeft
 import { useConfirmation } from '../../shared/hooks/useConfirmation';
 import styles from './SectionsModule.module.css';
 
-const getAttendanceStatus = (percentage: number) => {
-    if (percentage >= 75) return 'high';
-    if (percentage >= 50) return 'mid';
-    return 'low';
-};
+const getProgressStyleVars = (percentage: number): CSSProperties => (
+    getProgressCssVars(percentage) as CSSProperties
+);
 
 interface SectionsModuleProps {
     courseId?: string;
@@ -416,6 +415,7 @@ export const SectionsModule = ({ courseId, hideHeader = false, onSelectSection, 
                         const attStats = getSectionAttendanceStats(section.id);
                         const studentCount = getStudentCount(section.id);
                         const profName = getProfessorName(section.professorId);
+                        const sectionProgressStyle = getProgressStyleVars(attStats.percentage);
 
                         return (
                             <div
@@ -471,19 +471,12 @@ export const SectionsModule = ({ courseId, hideHeader = false, onSelectSection, 
                                     </div>
                                     <div className={styles.sectionCardAttendance}>
                                         <progress
-                                            className={[
-                                                styles.sectionAttendanceProgress,
-                                                styles[`sectionAttendanceProgress${getAttendanceStatus(attStats.percentage)}`]
-                                            ].join(' ')}
+                                            className={styles.sectionAttendanceProgress}
                                             value={attStats.percentage}
                                             max={100}
+                                            style={sectionProgressStyle}
                                         />
-                                        <span
-                                            className={[
-                                                styles.sectionAttendanceValue,
-                                                styles[`sectionAttendanceValue${getAttendanceStatus(attStats.percentage)}`]
-                                            ].join(' ')}
-                                        >
+                                        <span className={styles.sectionAttendanceValue} style={sectionProgressStyle}>
                                             {attStats.percentage}% Overall Attendance
                                         </span>
                                     </div>
@@ -1172,7 +1165,7 @@ export const SectionDetail = ({ sectionId, onBack, onUnsavedChanges, searchTerm 
                             : StorageService.getSectionStudentActiveStatus(student.id, section.id);
                         const globalActive = StorageService.getStudentActiveStatus(student.id);
                         const isInactive = !globalActive || !sectionActive;
-                        const attendanceStatus = getAttendanceStatus(attStats.percentage);
+                        const studentProgressStyle = getProgressStyleVars(attStats.percentage);
 
                         return (
                             <div
@@ -1275,20 +1268,19 @@ export const SectionDetail = ({ sectionId, onBack, onUnsavedChanges, searchTerm 
                                         ].filter(Boolean).join(' ')}>Section Attendance</span>
                                         <span className={[
                                             styles.studentAttendanceValue,
-                                            isPending ? styles.studentAttendanceValuePending : '',
-                                            !isPending ? styles[`studentAttendanceValue${attendanceStatus}`] : ''
-                                        ].filter(Boolean).join(' ')}>
+                                            isPending ? styles.studentAttendanceValuePending : ''
+                                        ].filter(Boolean).join(' ')} style={!isPending ? studentProgressStyle : undefined}>
                                             {attStats.total > 0 ? `${attStats.percentage}%` : 'No data'}
                                         </span>
                                     </div>
                                     <progress
                                         className={[
                                             styles.studentAttendanceProgress,
-                                            isPending ? styles.studentAttendanceProgressPending : '',
-                                            !isPending ? styles[`studentAttendanceProgress${attendanceStatus}`] : ''
+                                            isPending ? styles.studentAttendanceProgressPending : ''
                                         ].filter(Boolean).join(' ')}
                                         value={attStats.percentage}
                                         max={100}
+                                        style={!isPending ? studentProgressStyle : undefined}
                                     />
                                     <div className={[
                                         styles.studentAttendanceFootnote,

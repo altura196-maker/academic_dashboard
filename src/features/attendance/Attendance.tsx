@@ -1,7 +1,8 @@
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect, useRef, useCallback, type CSSProperties } from 'react';
 import { useBlocker, useLocation } from 'react-router-dom';
 import { useConfirmation } from '../../shared/hooks/useConfirmation';
 import { StorageService } from '../../shared/utils/storage';
+import { getProgressCssVars } from '../../shared/utils/progressTone';
 import { matchesSearch } from '../../shared/utils/search';
 import { Course, Section, Student, Attendance as AttendanceType } from '../../shared/utils/types';
 import { Button } from '../../shared/components/Button';
@@ -125,11 +126,9 @@ export const Attendance = () => {
         return { present, total: activeRecords.length };
     };
 
-    const getAttendanceStatus = (percentage: number) => {
-        if (percentage >= 80) return 'high';
-        if (percentage >= 50) return 'mid';
-        return 'low';
-    };
+    const getProgressStyle = (percentage: number): CSSProperties => (
+        getProgressCssVars(percentage) as CSSProperties
+    );
 
     const { showConfirmation } = useConfirmation();
 
@@ -960,7 +959,7 @@ export const Attendance = () => {
                                 const { present: presentCount, total: totalCount } = getActiveRecordStats(record, record.sectionId);
                                 const percentage = totalCount > 0 ? Math.round((presentCount / totalCount) * 100) : 0;
                                 const isExpanded = expandedTimelineDate === record.id;
-                                const attendanceStatus = getAttendanceStatus(percentage);
+                                const timelineProgressStyle = getProgressStyle(percentage);
 
                                 const attendingStudents = record.records
                                     .filter(r => r.present && StorageService.getEffectiveStudentStatus(r.studentId, record.sectionId))
@@ -988,16 +987,13 @@ export const Attendance = () => {
                                                 isExpanded ? styles.timelineCardHeaderActive : ''
                                             ].filter(Boolean).join(' ')}
                                         >
-                                                <div className={styles.timelineCardTitleRow}>
-                                                    <div>
-                                                        <div className={styles.timelineCardCourse}>{course?.name || 'Unknown'}</div>
-                                                        <div className={styles.timelineCardTitle}>{getSectionDisplayName(section)}</div>
-                                                    </div>
-                                                    <div className={styles.timelineMetric}>
-                                                        <div className={[
-                                                            styles.timelineMetricValue,
-                                                            styles[`timelineMetric${attendanceStatus}`]
-                                                    ].join(' ')}>{percentage}%</div>
+                                            <div className={styles.timelineCardTitleRow}>
+                                                <div>
+                                                    <div className={styles.timelineCardCourse}>{course?.name || 'Unknown'}</div>
+                                                    <div className={styles.timelineCardTitle}>{getSectionDisplayName(section)}</div>
+                                                </div>
+                                                <div className={styles.timelineMetric}>
+                                                    <div className={styles.timelineMetricValue} style={timelineProgressStyle}>{percentage}%</div>
                                                     <div className={styles.timelineMetricLabel}>ATTENDANCE</div>
                                                 </div>
                                             </div>

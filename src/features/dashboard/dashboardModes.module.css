@@ -58,6 +58,10 @@
 .dashboardCard {
     --card-fill: 0%;
     --card-tone: var(--status-info);
+    --tone-fill-start: 6%;
+    --tone-fill-end: 18%;
+    --badge-shadow-strength: 55%;
+    --progress-mix: 68%;
     position: relative;
     overflow: hidden;
     border: 1px solid var(--border-color);
@@ -74,8 +78,8 @@
     height: var(--card-fill);
     background: linear-gradient(
         180deg,
-        color-mix(in srgb, var(--card-tone) 6%, transparent),
-        color-mix(in srgb, var(--card-tone) 18%, transparent)
+        color-mix(in srgb, var(--card-tone) var(--tone-fill-start), transparent),
+        color-mix(in srgb, var(--card-tone) var(--tone-fill-end), transparent)
     );
     pointer-events: none;
 }
@@ -219,7 +223,7 @@
     letter-spacing: -0.01em;
     color: var(--badge-fg);
     background: var(--badge-bg);
-    box-shadow: 0 8px 18px -12px color-mix(in srgb, var(--badge-fg) 55%, transparent);
+    box-shadow: 0 8px 18px -12px color-mix(in srgb, var(--badge-fg) var(--badge-shadow-strength), transparent);
     font-variant-numeric: tabular-nums;
 }
 
@@ -277,7 +281,28 @@
     height: 100%;
     width: var(--progress, 0%);
     border-radius: 999px;
-    background: color-mix(in srgb, var(--card-tone) 68%, #ffffff);
+    background: color-mix(in srgb, var(--progress-color, var(--card-tone)) var(--progress-mix), #ffffff);
+}
+
+.severityNormal {
+    --tone-fill-start: 6%;
+    --tone-fill-end: 18%;
+    --badge-shadow-strength: 55%;
+    --progress-mix: 68%;
+}
+
+.severityNearCritical {
+    --tone-fill-start: 9%;
+    --tone-fill-end: 24%;
+    --badge-shadow-strength: 70%;
+    --progress-mix: 80%;
+}
+
+.severityCritical {
+    --tone-fill-start: 12%;
+    --tone-fill-end: 32%;
+    --badge-shadow-strength: 86%;
+    --progress-mix: 90%;
 }
 
 .dashboardModule[data-visual-mode="minimal"] .dashboardHeaderShell {
@@ -308,16 +333,37 @@
     box-shadow: var(--shadow-md);
 }
 
+.dashboardModule[data-visual-mode="expressive"] .severityNormal {
+    --tone-fill-start: 12%;
+    --tone-fill-end: 30%;
+    --badge-shadow-strength: 62%;
+    --progress-mix: 76%;
+}
+
+.dashboardModule[data-visual-mode="expressive"] .severityNearCritical {
+    --tone-fill-start: 15%;
+    --tone-fill-end: 36%;
+    --badge-shadow-strength: 78%;
+    --progress-mix: 84%;
+}
+
+.dashboardModule[data-visual-mode="expressive"] .severityCritical {
+    --tone-fill-start: 18%;
+    --tone-fill-end: 42%;
+    --badge-shadow-strength: 90%;
+    --progress-mix: 92%;
+}
+
 .dashboardModule[data-visual-mode="expressive"] .dashboardCard::before {
     background: linear-gradient(
         180deg,
-        color-mix(in srgb, var(--card-tone) 12%, transparent),
-        color-mix(in srgb, var(--card-tone) 30%, transparent)
+        color-mix(in srgb, var(--card-tone) var(--tone-fill-start), transparent),
+        color-mix(in srgb, var(--card-tone) var(--tone-fill-end), transparent)
     );
 }
 
 .dashboardModule[data-visual-mode="expressive"] .metricBadge {
-    box-shadow: 0 10px 22px -12px color-mix(in srgb, var(--badge-fg) 62%, transparent);
+    box-shadow: 0 10px 22px -12px color-mix(in srgb, var(--badge-fg) var(--badge-shadow-strength), transparent);
 }
 
 :global(:root[data-theme="dark"]) .badgeCourse {

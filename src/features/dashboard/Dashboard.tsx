@@ -1,12 +1,19 @@
 import { type CSSProperties } from 'react';
-import { AlertTriangle, BookOpen, TrendingUp, UserCheck, UserMinus, Users } from 'lucide-react';
+import { AlertTriangle, BookOpen, UserCheck, UserMinus, Users } from 'lucide-react';
 import { DashboardHeaderControls } from './components/DashboardHeaderControls';
+import { CourseAttendanceCards } from './components/CourseAttendanceCards';
 import { DashboardMatrixView } from './Dashboard2';
 import { DashboardSplitView } from './Dashboard3';
 import { useDashboardActions } from './useDashboardActions';
 import { useDashboardData } from './useDashboardData';
 import { useDashboardView } from './useDashboardView';
 import { useDashboardVisualMode } from './useDashboardVisualMode';
+import {
+    getDashboardBadgeClassKey,
+    getDashboardSeverityClassKey,
+    getDashboardToneClassKey,
+    getProgressCssVars
+} from '../../shared/utils/progressTone';
 import modes from './dashboardModes.module.css';
 import styles from './Dashboard.module.css';
 import type { DashboardViewMode } from './types';
@@ -14,19 +21,14 @@ import type { DashboardViewMode } from './types';
 const clampPercent = (value: number) => Math.max(0, Math.min(100, value));
 
 const getFillStyle = (percentage: number): CSSProperties => ({
-    '--card-fill': `${clampPercent(percentage)}%`
+    '--card-fill': `${clampPercent(percentage)}%`,
+    ...getProgressCssVars(percentage)
 } as CSSProperties);
 
 const getProgressStyle = (percentage: number): CSSProperties => ({
-    '--progress': `${clampPercent(percentage)}%`
+    '--progress': `${clampPercent(percentage)}%`,
+    ...getProgressCssVars(percentage)
 } as CSSProperties);
-
-const getCourseToneClass = (percentage: number) => {
-    if (percentage >= 85) return modes.toneSuccess;
-    if (percentage >= 65) return modes.toneInfo;
-    if (percentage >= 45) return modes.toneWarning;
-    return modes.toneDanger;
-};
 
 const renderExecutiveGrid = (
     data: ReturnType<typeof useDashboardData>
@@ -36,9 +38,17 @@ const renderExecutiveGrid = (
         courseAttendance,
         enrolledShare,
         notEnrolledShare,
-        withdrawnShare,
-        getCoursePercentStyle
+        withdrawnShare
     } = data;
+    const enrolledToneClass = modes[getDashboardToneClassKey(enrolledShare.percentage)];
+    const enrolledBadgeClass = modes[getDashboardBadgeClassKey(enrolledShare.percentage)];
+    const enrolledSeverityClass = modes[getDashboardSeverityClassKey(enrolledShare.percentage)];
+    const notEnrolledToneClass = modes[getDashboardToneClassKey(notEnrolledShare.percentage)];
+    const notEnrolledBadgeClass = modes[getDashboardBadgeClassKey(notEnrolledShare.percentage)];
+    const notEnrolledSeverityClass = modes[getDashboardSeverityClassKey(notEnrolledShare.percentage)];
+    const withdrawnToneClass = modes[getDashboardToneClassKey(withdrawnShare.percentage)];
+    const withdrawnBadgeClass = modes[getDashboardBadgeClassKey(withdrawnShare.percentage)];
+    const withdrawnSeverityClass = modes[getDashboardSeverityClassKey(withdrawnShare.percentage)];
 
     return (
         <>
@@ -83,7 +93,7 @@ const renderExecutiveGrid = (
                         </div>
 
                         <div className={styles.studentsGrid}>
-                            <article className={`${modes.dashboardCard} ${modes.toneSuccess} ${styles.studentCard}`} style={getFillStyle(enrolledShare.percentage)}>
+                            <article className={`${modes.dashboardCard} ${enrolledToneClass} ${enrolledSeverityClass} ${styles.studentCard}`} style={getFillStyle(enrolledShare.percentage)}>
                                 <div className={`${modes.cardBody} ${styles.studentCardBody}`}>
                                     <div className={modes.metricLabelRow}>
                                         <span className={`${modes.metricIcon} ${modes.metricIconSuccess}`}><UserCheck size={14} /></span>
@@ -91,14 +101,14 @@ const renderExecutiveGrid = (
                                     </div>
                                     <div className={modes.metricValueRow}>
                                         <span className={modes.metricValue}>{enrolledShare.count}</span>
-                                        <span className={`${modes.metricBadge} ${modes.badgeSuccess}`}>
+                                        <span className={`${modes.metricBadge} ${enrolledBadgeClass}`}>
                                             <span className={modes.metricBadgeText}>{enrolledShare.percentage}%</span>
                                         </span>
                                     </div>
                                 </div>
                             </article>
 
-                            <article className={`${modes.dashboardCard} ${modes.toneInfo} ${styles.studentCard}`} style={getFillStyle(notEnrolledShare.percentage)}>
+                            <article className={`${modes.dashboardCard} ${notEnrolledToneClass} ${notEnrolledSeverityClass} ${styles.studentCard}`} style={getFillStyle(notEnrolledShare.percentage)}>
                                 <div className={`${modes.cardBody} ${styles.studentCardBody}`}>
                                     <div className={modes.metricLabelRow}>
                                         <span className={`${modes.metricIcon} ${modes.metricIconInfo}`}><UserMinus size={14} /></span>
@@ -106,14 +116,14 @@ const renderExecutiveGrid = (
                                     </div>
                                     <div className={modes.metricValueRow}>
                                         <span className={modes.metricValue}>{notEnrolledShare.count}</span>
-                                        <span className={`${modes.metricBadge} ${modes.badgeInfo}`}>
+                                        <span className={`${modes.metricBadge} ${notEnrolledBadgeClass}`}>
                                             <span className={modes.metricBadgeText}>{notEnrolledShare.percentage}%</span>
                                         </span>
                                     </div>
                                 </div>
                             </article>
 
-                            <article className={`${modes.dashboardCard} ${modes.toneWarning} ${styles.studentCard}`} style={getFillStyle(withdrawnShare.percentage)}>
+                            <article className={`${modes.dashboardCard} ${withdrawnToneClass} ${withdrawnSeverityClass} ${styles.studentCard}`} style={getFillStyle(withdrawnShare.percentage)}>
                                 <div className={`${modes.cardBody} ${styles.studentCardBody}`}>
                                     <div className={modes.metricLabelRow}>
                                         <span className={`${modes.metricIcon} ${modes.metricIconWarning}`}><AlertTriangle size={14} /></span>
@@ -121,7 +131,7 @@ const renderExecutiveGrid = (
                                     </div>
                                     <div className={modes.metricValueRow}>
                                         <span className={modes.metricValue}>{withdrawnShare.count}</span>
-                                        <span className={`${modes.metricBadge} ${modes.badgeWarning}`}>
+                                        <span className={`${modes.metricBadge} ${withdrawnBadgeClass}`}>
                                             <span className={modes.metricBadgeText}>{withdrawnShare.percentage}%</span>
                                         </span>
                                     </div>
@@ -140,42 +150,11 @@ const renderExecutiveGrid = (
                     </div>
                 </div>
 
-                {courseAttendance.length === 0 ? (
-                    <div className={styles.emptyCard}>No attendance records available yet.</div>
-                ) : (
-                    <div className={styles.attendanceGrid}>
-                        {courseAttendance.map(course => (
-                            <article
-                                key={course.courseId}
-                                className={`${modes.dashboardCard} ${modes.toneCourse} ${getCourseToneClass(course.percentage)} ${styles.courseCard}`}
-                                style={{ ...getFillStyle(course.percentage), ...getCoursePercentStyle(course) }}
-                            >
-                                <div className={`${modes.cardBody} ${styles.courseBody}`}>
-                                    <div className={styles.courseHeader}>
-                                        <div>
-                                            <div className={modes.metricLabelRow}>
-                                                <span className={`${modes.metricIcon} ${modes.metricIconInfo}`}><TrendingUp size={14} /></span>
-                                                <h3 className={styles.courseTitle}>{course.courseName}</h3>
-                                            </div>
-                                            <p className={styles.courseMeta}>
-                                                <span className={styles.courseMetaValue}>{course.present}</span>
-                                                <span>/</span>
-                                                <span className={styles.courseMetaValue}>{course.total}</span>
-                                                <span>present</span>
-                                            </p>
-                                        </div>
-                                        <span className={`${modes.metricBadge} ${modes.badgeCourse}`} style={getCoursePercentStyle(course)}>
-                                            <span className={modes.metricBadgeText}>{course.percentage}%</span>
-                                        </span>
-                                    </div>
-                                    <div className={modes.progressTrack}>
-                                        <div className={modes.progressFill} style={getProgressStyle(course.percentage)} />
-                                    </div>
-                                </div>
-                            </article>
-                        ))}
-                    </div>
-                )}
+                <CourseAttendanceCards
+                    courseAttendance={courseAttendance}
+                    getFillStyle={getFillStyle}
+                    getProgressStyle={getProgressStyle}
+                />
             </section>
         </>
     );
@@ -223,7 +202,6 @@ export const Dashboard = () => {
                     enrolledShare={data.enrolledShare}
                     notEnrolledShare={data.notEnrolledShare}
                     withdrawnShare={data.withdrawnShare}
-                    getCoursePercentStyle={data.getCoursePercentStyle}
                     getFillStyle={getFillStyle}
                     getProgressStyle={getProgressStyle}
                 />
@@ -236,7 +214,6 @@ export const Dashboard = () => {
                     enrolledShare={data.enrolledShare}
                     notEnrolledShare={data.notEnrolledShare}
                     withdrawnShare={data.withdrawnShare}
-                    getCoursePercentStyle={data.getCoursePercentStyle}
                     getFillStyle={getFillStyle}
                     getProgressStyle={getProgressStyle}
                 />

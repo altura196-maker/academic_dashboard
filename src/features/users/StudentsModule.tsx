@@ -6,7 +6,14 @@ import { Modal } from '../../shared/components/Modal';
 import { Input, Select } from '../../shared/components/Input';
 import { Pencil, Trash2, Plus, ClipboardList, ChevronDown, ChevronRight, DollarSign, Users, UserCheck, UserX, BookOpen, BarChart3, AlertTriangle } from 'lucide-react';
 import { PaymentsModule } from '../payments';
+import {
+    getDashboardBadgeClassKey,
+    getDashboardSeverityClassKey,
+    getDashboardToneClassKey,
+    getProgressCssVars
+} from '../../shared/utils/progressTone';
 import { useConfirmation } from '../../shared/hooks/useConfirmation';
+import dashboardModes from '../dashboard/dashboardModes.module.css';
 import styles from './StudentsModule.module.css';
 
 interface StudentsModuleProps {
@@ -502,11 +509,9 @@ export const StudentsModule = ({ sectionId, courseId, hideHeader = false }: Stud
         return age;
     };
 
-    const getAttendanceStatus = (percent: number) => {
-        if (percent >= 75) return 'high';
-        if (percent >= 50) return 'mid';
-        return 'low';
-    };
+    const getProgressStyle = (percentage: number): CSSProperties => (
+        getProgressCssVars(percentage) as CSSProperties
+    );
 
     const getStudentOverallAttendance = useCallback((studentId: string) => {
         const studentEnrollments = enrollments.filter(e => e.studentId === studentId);
@@ -887,14 +892,20 @@ export const StudentsModule = ({ sectionId, courseId, hideHeader = false }: Stud
     const enrolledShare = getStudentShare(studentInsights.enrolledCount);
     const notEnrolledShare = getStudentShare(studentInsights.notEnrolledCount);
     const withdrawnShare = getStudentShare(studentInsights.withdrawnCount);
-    const avgAttendanceLevel = getAttendanceStatus(studentInsights.avgAttendance);
-    const avgAttendanceBadgeClass = avgAttendanceLevel === 'high'
-        ? styles.insightPercentEnrolled
-        : avgAttendanceLevel === 'mid'
-            ? styles.insightPercentWarning
-            : styles.insightPercentDanger;
-    const getInsightFillStyle = (percentage: number): CSSProperties => ({
-        '--insight-fill': `${Math.max(0, Math.min(100, percentage))}%`
+    const enrolledToneClass = dashboardModes[getDashboardToneClassKey(enrolledShare.percentage)];
+    const enrolledBadgeClass = dashboardModes[getDashboardBadgeClassKey(enrolledShare.percentage)];
+    const enrolledSeverityClass = dashboardModes[getDashboardSeverityClassKey(enrolledShare.percentage)];
+    const notEnrolledToneClass = dashboardModes[getDashboardToneClassKey(notEnrolledShare.percentage)];
+    const notEnrolledBadgeClass = dashboardModes[getDashboardBadgeClassKey(notEnrolledShare.percentage)];
+    const notEnrolledSeverityClass = dashboardModes[getDashboardSeverityClassKey(notEnrolledShare.percentage)];
+    const withdrawnToneClass = dashboardModes[getDashboardToneClassKey(withdrawnShare.percentage)];
+    const withdrawnBadgeClass = dashboardModes[getDashboardBadgeClassKey(withdrawnShare.percentage)];
+    const withdrawnSeverityClass = dashboardModes[getDashboardSeverityClassKey(withdrawnShare.percentage)];
+    const avgAttendanceToneClass = dashboardModes[getDashboardToneClassKey(studentInsights.avgAttendance)];
+    const avgAttendanceBadgeClass = dashboardModes[getDashboardBadgeClassKey(studentInsights.avgAttendance)];
+    const avgAttendanceSeverityClass = dashboardModes[getDashboardSeverityClassKey(studentInsights.avgAttendance)];
+    const getCardFillStyle = (percentage: number): CSSProperties => ({
+        '--card-fill': `${Math.max(0, Math.min(100, percentage))}%`
     } as CSSProperties);
 
     return (
@@ -920,92 +931,93 @@ export const StudentsModule = ({ sectionId, courseId, hideHeader = false }: Stud
             )}
 
             <div className={styles.insightsGrid}>
-                <div className={styles.insightCard} data-tone="primary" style={getInsightFillStyle(0)}>
-                    <div className={styles.insightBody}>
-                        <div className={styles.insightLabelRow}>
-                            <div className={styles.insightIcon} data-tone="primary">
-                                <Users size={18} />
-                            </div>
-                            <div className={styles.insightLabel}>Total Students</div>
+                <div className={`${dashboardModes.dashboardCard} ${dashboardModes.tonePrimary} ${styles.insightCardShell}`} style={getCardFillStyle(0)}>
+                    <div className={`${dashboardModes.cardBody} ${styles.insightCardBody}`}>
+                        <div className={dashboardModes.metricLabelRow}>
+                            <span className={`${dashboardModes.metricIcon} ${dashboardModes.metricIconInfo}`}>
+                                <Users size={14} />
+                            </span>
+                            <p className={dashboardModes.metricLabel}>Total Students</p>
                         </div>
-                        <div className={styles.insightValue}>{studentInsights.totalStudents}</div>
+                        <div className={dashboardModes.metricValueRow}>
+                            <span className={`${dashboardModes.metricValue} ${dashboardModes.metricValuePill}`}>{studentInsights.totalStudents}</span>
+                        </div>
                     </div>
                 </div>
-                <div className={styles.insightCard} data-tone="success" style={getInsightFillStyle(enrolledShare.percentage)}>
-                    <div className={styles.insightBody}>
-                        <div className={styles.insightLabelRow}>
-                            <div className={styles.insightIcon} data-tone="success">
-                                <UserCheck size={18} />
-                            </div>
-                            <div className={styles.insightLabel}>Enrolled</div>
+                <div className={`${dashboardModes.dashboardCard} ${enrolledToneClass} ${enrolledSeverityClass} ${styles.insightCardShell}`} style={getCardFillStyle(enrolledShare.percentage)}>
+                    <div className={`${dashboardModes.cardBody} ${styles.insightCardBody}`}>
+                        <div className={dashboardModes.metricLabelRow}>
+                            <span className={`${dashboardModes.metricIcon} ${dashboardModes.metricIconSuccess}`}>
+                                <UserCheck size={14} />
+                            </span>
+                            <p className={dashboardModes.metricLabel}>Enrolled</p>
                         </div>
-                        <div className={styles.insightValueSplit}>
-                            <span className={styles.insightValueCount}>{enrolledShare.count}</span>
-                            <span className={`${styles.insightPercentBadge} ${styles.insightPercentEnrolled}`}>
-                                <span className={styles.insightPercentBadgeText}>{enrolledShare.percentage}%</span>
+                        <div className={dashboardModes.metricValueRow}>
+                            <span className={dashboardModes.metricValue}>{enrolledShare.count}</span>
+                            <span className={`${dashboardModes.metricBadge} ${enrolledBadgeClass}`}>
+                                <span className={dashboardModes.metricBadgeText}>{enrolledShare.percentage}%</span>
                             </span>
                         </div>
                     </div>
                 </div>
-                <div className={styles.insightCard} data-tone="info" style={getInsightFillStyle(notEnrolledShare.percentage)}>
-                    <div className={styles.insightBody}>
-                        <div className={styles.insightLabelRow}>
-                            <div className={styles.insightIcon} data-tone="info">
-                                <UserX size={18} />
-                            </div>
-                            <div className={styles.insightLabel}>Not enrolled</div>
+                <div className={`${dashboardModes.dashboardCard} ${notEnrolledToneClass} ${notEnrolledSeverityClass} ${styles.insightCardShell}`} style={getCardFillStyle(notEnrolledShare.percentage)}>
+                    <div className={`${dashboardModes.cardBody} ${styles.insightCardBody}`}>
+                        <div className={dashboardModes.metricLabelRow}>
+                            <span className={`${dashboardModes.metricIcon} ${dashboardModes.metricIconInfo}`}>
+                                <UserX size={14} />
+                            </span>
+                            <p className={dashboardModes.metricLabel}>Not enrolled</p>
                         </div>
-                        <div className={styles.insightValueSplit}>
-                            <span className={styles.insightValueCount}>{notEnrolledShare.count}</span>
-                            <span className={`${styles.insightPercentBadge} ${styles.insightPercentInfo}`}>
-                                <span className={styles.insightPercentBadgeText}>{notEnrolledShare.percentage}%</span>
+                        <div className={dashboardModes.metricValueRow}>
+                            <span className={dashboardModes.metricValue}>{notEnrolledShare.count}</span>
+                            <span className={`${dashboardModes.metricBadge} ${notEnrolledBadgeClass}`}>
+                                <span className={dashboardModes.metricBadgeText}>{notEnrolledShare.percentage}%</span>
                             </span>
                         </div>
                     </div>
                 </div>
-                <div className={styles.insightCard} data-tone="warning" style={getInsightFillStyle(withdrawnShare.percentage)}>
-                    <div className={styles.insightBody}>
-                        <div className={styles.insightLabelRow}>
-                            <div className={styles.insightIcon} data-tone="warning">
-                                <AlertTriangle size={18} />
-                            </div>
-                            <div className={styles.insightLabel}>Withdrawn</div>
+                <div className={`${dashboardModes.dashboardCard} ${withdrawnToneClass} ${withdrawnSeverityClass} ${styles.insightCardShell}`} style={getCardFillStyle(withdrawnShare.percentage)}>
+                    <div className={`${dashboardModes.cardBody} ${styles.insightCardBody}`}>
+                        <div className={dashboardModes.metricLabelRow}>
+                            <span className={`${dashboardModes.metricIcon} ${dashboardModes.metricIconWarning}`}>
+                                <AlertTriangle size={14} />
+                            </span>
+                            <p className={dashboardModes.metricLabel}>Withdrawn</p>
                         </div>
-                        <div className={styles.insightValueSplit}>
-                            <span className={styles.insightValueCount}>{withdrawnShare.count}</span>
-                            <span className={`${styles.insightPercentBadge} ${styles.insightPercentWarning}`}>
-                                <span className={styles.insightPercentBadgeText}>{withdrawnShare.percentage}%</span>
+                        <div className={dashboardModes.metricValueRow}>
+                            <span className={dashboardModes.metricValue}>{withdrawnShare.count}</span>
+                            <span className={`${dashboardModes.metricBadge} ${withdrawnBadgeClass}`}>
+                                <span className={dashboardModes.metricBadgeText}>{withdrawnShare.percentage}%</span>
                             </span>
                         </div>
                     </div>
                 </div>
-                <div className={styles.insightCard} data-tone="info" style={getInsightFillStyle(studentInsights.avgAttendance)}>
-                    <div className={styles.insightBody}>
-                        <div className={styles.insightLabelRow}>
-                            <div className={styles.insightIcon} data-tone="info">
-                                <BarChart3 size={18} />
-                            </div>
-                            <div className={styles.insightLabel}>Avg Attendance</div>
+                <div className={`${dashboardModes.dashboardCard} ${avgAttendanceToneClass} ${avgAttendanceSeverityClass} ${styles.insightCardShell}`} style={getCardFillStyle(studentInsights.avgAttendance)}>
+                    <div className={`${dashboardModes.cardBody} ${styles.insightCardBody}`}>
+                        <div className={dashboardModes.metricLabelRow}>
+                            <span className={`${dashboardModes.metricIcon} ${dashboardModes.metricIconInfo}`}>
+                                <BarChart3 size={14} />
+                            </span>
+                            <p className={dashboardModes.metricLabel}>Avg Attendance</p>
                         </div>
-                        <div className={styles.insightValueSplit}>
-                            <span className={`${styles.insightPercentBadge} ${avgAttendanceBadgeClass}`}>
-                                <span className={styles.insightPercentBadgeText}>{studentInsights.avgAttendance}%</span>
+                        <div className={dashboardModes.metricValueRow}>
+                            <span className={dashboardModes.metricValue}>{studentInsights.avgAttendance}%</span>
+                            <span className={`${dashboardModes.metricBadge} ${avgAttendanceBadgeClass}`}>
+                                <span className={dashboardModes.metricBadgeText}>{studentInsights.avgAttendance}%</span>
                             </span>
                         </div>
                     </div>
                 </div>
-                <div className={styles.insightCard} data-tone="accent" style={getInsightFillStyle(0)}>
-                    <div className={styles.insightBody}>
-                        <div className={styles.insightLabelRow}>
-                            <div className={styles.insightIcon} data-tone="accent">
-                                <BookOpen size={18} />
-                            </div>
-                            <div className={styles.insightLabel}>Courses / Student</div>
-                        </div>
-                        <div className={styles.insightValueSplit}>
-                            <span className={`${styles.insightPercentBadge} ${styles.insightPercentAccent}`}>
-                                <span className={styles.insightPercentBadgeText}>{studentInsights.avgCourses}</span>
+                <div className={`${dashboardModes.dashboardCard} ${dashboardModes.toneAccent} ${styles.insightCardShell}`} style={getCardFillStyle(0)}>
+                    <div className={`${dashboardModes.cardBody} ${styles.insightCardBody}`}>
+                        <div className={dashboardModes.metricLabelRow}>
+                            <span className={`${dashboardModes.metricIcon} ${dashboardModes.metricIconAccent}`}>
+                                <BookOpen size={14} />
                             </span>
+                            <p className={dashboardModes.metricLabel}>Courses / Student</p>
+                        </div>
+                        <div className={dashboardModes.metricValueRow}>
+                            <span className={`${dashboardModes.metricValue} ${dashboardModes.metricValuePill}`}>{studentInsights.avgCourses}</span>
                         </div>
                     </div>
                 </div>
@@ -1219,15 +1231,15 @@ export const StudentsModule = ({ sectionId, courseId, hideHeader = false }: Stud
                                         })() : (() => {
                                             const overall = getStudentOverallAttendance(student.id);
                                             if (overall.total === 0) return <span className={styles.attendanceEmpty}>—</span>;
-                                            const level = getAttendanceStatus(overall.percent);
                                             return (
                                                 <div className={styles.attendanceRow}>
                                                     <progress
-                                                        className={`${styles.attendanceProgress} ${styles[`attendanceProgress${level}`]}`}
+                                                        className={styles.attendanceProgress}
                                                         value={overall.percent}
                                                         max={100}
+                                                        style={getProgressStyle(overall.percent)}
                                                     />
-                                                    <span className={`${styles.attendanceValue} ${styles[`attendanceValue${level}`]}`}>
+                                                    <span className={styles.attendanceValue} style={getProgressStyle(overall.percent)}>
                                                         {overall.percent}%
                                                     </span>
                                                 </div>
@@ -1277,7 +1289,6 @@ export const StudentsModule = ({ sectionId, courseId, hideHeader = false }: Stud
                                                                 ? 'Withdrawn'
                                                                 : status;
                                                         const stats = calcAttendance(section.id);
-                                                        const sectionStatus = getAttendanceStatus(stats.percent);
                                                         const statusClass = status === 'Enrolled' && effectiveActive ? styles.statusActive : styles.statusInactive;
                                                         return (
                                                             <div className={styles.sectionCard}>
@@ -1302,11 +1313,12 @@ export const StudentsModule = ({ sectionId, courseId, hideHeader = false }: Stud
                                                                 </div>
                                                                 <div className={styles.sectionProgressRow}>
                                                                     <progress
-                                                                        className={`${styles.attendanceProgress} ${styles[`attendanceProgress${sectionStatus}`]}`}
+                                                                        className={styles.attendanceProgress}
                                                                         value={stats.percent}
                                                                         max={100}
+                                                                        style={getProgressStyle(stats.percent)}
                                                                     />
-                                                                    <span className={styles.sectionProgressValue}>{stats.percent}% Att.</span>
+                                                                    <span className={styles.sectionProgressValue} style={getProgressStyle(stats.percent)}>{stats.percent}% Att.</span>
                                                                 </div>
                                                             </div>
                                                         );

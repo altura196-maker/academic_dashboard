@@ -233,6 +233,17 @@
     margin: 1rem 0;
 }
 
+.insightCardShell {
+    padding: 0.68rem 0.72rem;
+}
+
+.insightCardBody {
+    display: flex;
+    flex-direction: column;
+    gap: 0.42rem;
+    min-height: 3rem;
+}
+
 .insightCard {
     --insight-fill: 0%;
     --insight-fill-color: var(--status-info);
@@ -718,33 +729,10 @@
     border-radius: 0.25rem;
 }
 
-.attendanceProgresshigh {
-    --progress-color: #10b981;
-}
-
-.attendanceProgressmid {
-    --progress-color: #f59e0b;
-}
-
-.attendanceProgresslow {
-    --progress-color: #ef4444;
-}
-
 .attendanceValue {
     font-weight: 600;
     font-size: 0.75rem;
-}
-
-.attendanceValuehigh {
-    color: var(--status-success);
-}
-
-.attendanceValuemid {
-    color: var(--status-warning);
-}
-
-.attendanceValuelow {
-    color: var(--status-danger);
+    color: var(--progress-text-color, var(--text-secondary));
 }
 
 .attendanceEmpty {
@@ -850,6 +838,7 @@
 .sectionProgressValue {
     font-size: 0.8rem;
     font-weight: 600;
+    color: var(--progress-text-color, var(--text-secondary));
 }
 
 .emptyCourses {

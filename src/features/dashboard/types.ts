@@ -14,7 +14,6 @@ export interface DashboardViewProps {
     enrolledShare: StudentShare;
     notEnrolledShare: StudentShare;
     withdrawnShare: StudentShare;
-    getCoursePercentStyle: (course: CourseAttendanceStats) => CSSProperties;
     getFillStyle: (percentage: number) => CSSProperties;
     getProgressStyle: (percentage: number) => CSSProperties;
 }
