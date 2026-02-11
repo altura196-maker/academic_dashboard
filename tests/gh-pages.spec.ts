@@ -16,6 +16,36 @@ test('hash routing supports deep navigation and reload', async ({ page }) => {
     await expect(page.getByRole('heading', { name: 'System Schedule' })).toBeVisible();
 });
 
+test('entrypoint responds 200 and no source files are requested in production', async ({ page }) => {
+    const sourceRequests: string[] = [];
+    const failedRequests: string[] = [];
+    const pageErrors: string[] = [];
+
+    page.on('request', request => {
+        const path = new URL(request.url()).pathname;
+        if (path.includes('/src/')) {
+            sourceRequests.push(request.url());
+        }
+    });
+
+    page.on('requestfailed', request => {
+        const failure = request.failure();
+        failedRequests.push(`${request.method()} ${request.url()} :: ${failure?.errorText ?? 'unknown error'}`);
+    });
+
+    page.on('pageerror', error => {
+        pageErrors.push(String(error));
+    });
+
+    const response = await page.goto(`${ORIGIN}${BASE_PATH}/`, { waitUntil: 'domcontentloaded' });
+    expect(response?.status()).toBe(200);
+    await page.waitForLoadState('networkidle');
+
+    expect(sourceRequests).toEqual([]);
+    expect(failedRequests).toEqual([]);
+    expect(pageErrors).toEqual([]);
+});
+
 test('built html resolves base assets without unresolved placeholders', async ({ request }) => {
     const response = await request.get(`${ORIGIN}${BASE_PATH}/`);
     expect(response.ok()).toBeTruthy();
