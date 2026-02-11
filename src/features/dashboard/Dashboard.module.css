@@ -46,6 +46,10 @@
     justify-content: center;
 }
 
+.overviewValuePlain {
+    align-self: flex-end;
+}
+
 .totalWrap {
     display: inline-flex;
     align-items: baseline;

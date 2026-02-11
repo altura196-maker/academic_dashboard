@@ -1,5 +1,15 @@
 import { useEffect, useRef, useState } from 'react';
-import { Database, MoreVertical, Trash } from 'lucide-react';
+import {
+    Database,
+    LayoutGrid,
+    Grid2x2,
+    PanelsTopLeft,
+    Scale,
+    Minus,
+    Sparkles,
+    MoreVertical,
+    Trash
+} from 'lucide-react';
 import { Button } from '../../../shared/components/Button';
 import { DashboardVisualMode } from '../useDashboardVisualMode';
 import { DashboardViewMode } from '../types';
@@ -14,16 +24,16 @@ interface DashboardHeaderControlsProps {
     onClearData: () => Promise<void> | void;
 }
 
-const MODE_OPTIONS: Array<{ value: DashboardVisualMode; label: string }> = [
-    { value: 'balanced', label: 'Balanced' },
-    { value: 'minimal', label: 'Minimal' },
-    { value: 'expressive', label: 'Expressive' }
+const MODE_OPTIONS: Array<{ value: DashboardVisualMode; label: string; icon: typeof Scale; iconLabel: string }> = [
+    { value: 'balanced', label: 'Balanced', icon: Scale, iconLabel: 'Balanced' },
+    { value: 'minimal', label: 'Minimal', icon: Minus, iconLabel: 'Minimal' },
+    { value: 'expressive', label: 'Expressive', icon: Sparkles, iconLabel: 'Expressive' }
 ];
 
-const VIEW_OPTIONS: Array<{ value: DashboardViewMode; label: string }> = [
-    { value: 'executive', label: 'Executive Grid' },
-    { value: 'matrix', label: 'Card Matrix' },
-    { value: 'split', label: 'Split Panels' }
+const VIEW_OPTIONS: Array<{ value: DashboardViewMode; label: string; icon: typeof LayoutGrid; iconLabel: string }> = [
+    { value: 'executive', label: 'Executive Grid', icon: LayoutGrid, iconLabel: 'Grid view' },
+    { value: 'matrix', label: 'Card Matrix', icon: Grid2x2, iconLabel: 'Matrix view' },
+    { value: 'split', label: 'Split Panels', icon: PanelsTopLeft, iconLabel: 'Split view' }
 ];
 
 export const DashboardHeaderControls = ({
@@ -71,7 +81,9 @@ export const DashboardHeaderControls = ({
             <div className={styles.visualModeWrap}>
                 <span className={styles.visualModeLabel}>Switch view</span>
                 <div className={styles.visualModeGroup} role="group" aria-label="Dashboard view mode">
-                    {VIEW_OPTIONS.map(option => (
+                    {VIEW_OPTIONS.map(option => {
+                        const Icon = option.icon;
+                        return (
                         <button
                             key={option.value}
                             type="button"
@@ -81,17 +93,24 @@ export const DashboardHeaderControls = ({
                                 view === option.value ? styles.visualModeButtonActive : ''
                             ].filter(Boolean).join(' ')}
                             aria-pressed={view === option.value}
+                            aria-label={option.label}
+                            title={option.iconLabel}
                         >
-                            {option.label}
+                            <span className={styles.optionIcon} title={option.iconLabel} aria-hidden="true">
+                                <Icon size={14} />
+                            </span>
                         </button>
-                    ))}
+                        );
+                    })}
                 </div>
             </div>
 
             <div className={styles.visualModeWrap}>
                 <span className={styles.visualModeLabel}>Visual mode</span>
                 <div className={styles.visualModeGroup} role="group" aria-label="Dashboard visual mode">
-                    {MODE_OPTIONS.map(option => (
+                    {MODE_OPTIONS.map(option => {
+                        const Icon = option.icon;
+                        return (
                         <button
                             key={option.value}
                             type="button"
@@ -101,10 +120,15 @@ export const DashboardHeaderControls = ({
                                 mode === option.value ? styles.visualModeButtonActive : ''
                             ].filter(Boolean).join(' ')}
                             aria-pressed={mode === option.value}
+                            aria-label={option.label}
+                            title={option.iconLabel}
                         >
-                            {option.label}
+                            <span className={styles.optionIcon} title={option.iconLabel} aria-hidden="true">
+                                <Icon size={14} />
+                            </span>
                         </button>
-                    ))}
+                        );
+                    })}
                 </div>
             </div>
 

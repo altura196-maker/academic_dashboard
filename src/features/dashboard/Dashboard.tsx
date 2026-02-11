@@ -55,15 +55,15 @@ const renderExecutiveGrid = (
                         <div className={styles.overviewGrid}>
                             <article className={styles.metricTile}>
                                 <p className={modes.metricLabel}>Ongoing Courses</p>
-                                <p className={`${modes.metricValue} ${modes.metricValuePill}`}>{stats.activeCourses}</p>
+                                <p className={`${modes.metricValue} ${styles.overviewValuePlain}`}>{stats.activeCourses}</p>
                             </article>
                             <article className={styles.metricTile}>
                                 <p className={modes.metricLabel}>Ongoing Sections</p>
-                                <p className={`${modes.metricValue} ${modes.metricValuePill}`}>{stats.activeSections}</p>
+                                <p className={`${modes.metricValue} ${styles.overviewValuePlain}`}>{stats.activeSections}</p>
                             </article>
                             <article className={styles.metricTile}>
                                 <p className={modes.metricLabel}>Professors</p>
-                                <p className={`${modes.metricValue} ${modes.metricValuePill}`}>{stats.professors}</p>
+                                <p className={`${modes.metricValue} ${styles.overviewValuePlain}`}>{stats.professors}</p>
                             </article>
                         </div>
                     </div>
