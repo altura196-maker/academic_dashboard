@@ -29,6 +29,8 @@ export interface Student {
     sex?: 'Male' | 'Female' | 'Other';
 }
 
+export type StudentEnrollmentStatus = 'enrolled' | 'withdrawn' | 'not_enrolled';
+
 export interface StudentStatusHistory {
     id: string;
     studentId: string;

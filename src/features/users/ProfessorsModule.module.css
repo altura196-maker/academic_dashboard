@@ -23,7 +23,7 @@
     width: 32px;
     height: 32px;
     border-radius: 50%;
-    background-color: #3f3f46;
+    background-color: var(--bg-soft);
     display: flex;
     align-items: center;
     justify-content: center;

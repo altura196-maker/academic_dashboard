@@ -1,6 +1,20 @@
 import { useEffect, useState } from 'react';
 import { Link, useLocation, Outlet } from 'react-router-dom';
-import { BookOpen, DollarSign, Home, Users, UserCheck, CheckSquare, Calendar, Sun, Moon } from 'lucide-react';
+import {
+    BookOpen,
+    HelpCircle,
+    DollarSign,
+    Home,
+    Users,
+    UserCheck,
+    CheckSquare,
+    Calendar,
+    Sun,
+    Moon,
+    LayoutGrid,
+    PanelsTopLeft,
+    Settings
+} from 'lucide-react';
 import { Button } from './Button';
 
 const NavItem = ({ to, icon: Icon, label, active }: { to: string, icon: any, label: string, active: boolean }) => (
@@ -66,6 +80,8 @@ export const Layout = () => {
                 <nav className="sidebar-nav">
                     <div className="sidebar-menu-label">Menu</div>
                     <NavItem to="/" icon={Home} label="Dashboard" active={location.pathname === '/'} />
+                    <NavItem to="/dashboard-2" icon={LayoutGrid} label="Dashboard 2" active={location.pathname.startsWith('/dashboard-2')} />
+                    <NavItem to="/dashboard-3" icon={PanelsTopLeft} label="Dashboard 3" active={location.pathname.startsWith('/dashboard-3')} />
                     <NavItem to="/schedule" icon={Calendar} label="Schedule" active={location.pathname.startsWith('/schedule')} />
                     <NavItem to="/attendance" icon={CheckSquare} label="Attendance" active={location.pathname.startsWith('/attendance')} />
                     <NavItem to="/courses" icon={BookOpen} label="Courses" active={location.pathname.startsWith('/courses')} />
@@ -86,10 +102,10 @@ export const Layout = () => {
                         {theme === 'light' ? <Moon size={16} /> : <Sun size={16} />}
                     </Button>
                     <Button type="button" variant="ghost" size="sm" aria-label="Help" title="Help">
-                        <BookOpen size={16} />
+                        <HelpCircle size={16} />
                     </Button>
                     <Button type="button" variant="ghost" size="sm" aria-label="Settings" title="Settings">
-                        <Users size={16} />
+                        <Settings size={16} />
                     </Button>
                 </div>
             </aside>

@@ -8,6 +8,7 @@ interface ConfirmationOptions {
     message: string;
     confirmLabel?: string;
     cancelLabel?: string;
+    confirmVariant?: 'primary' | 'secondary' | 'danger' | 'ghost' | 'success';
 }
 
 interface ConfirmationContextType {
@@ -24,6 +25,7 @@ export const ConfirmationProvider: React.FC<{ children: React.ReactNode }> = ({ 
         message: string;
         confirmLabel: string;
         cancelLabel: string;
+        confirmVariant: 'primary' | 'secondary' | 'danger' | 'ghost' | 'success';
         resolve: (value: boolean) => void;
     } | null>(null);
 
@@ -35,6 +37,7 @@ export const ConfirmationProvider: React.FC<{ children: React.ReactNode }> = ({ 
                 message: options.message,
                 confirmLabel: options.confirmLabel || 'Confirm',
                 cancelLabel: options.cancelLabel || 'Cancel',
+                confirmVariant: options.confirmVariant || 'primary',
                 resolve,
             });
         });
@@ -71,7 +74,7 @@ export const ConfirmationProvider: React.FC<{ children: React.ReactNode }> = ({ 
                             <Button variant="secondary" onClick={handleCancel}>
                                 {modalState.cancelLabel}
                             </Button>
-                            <Button variant="primary" onClick={handleConfirm}>
+                            <Button variant={modalState.confirmVariant} onClick={handleConfirm}>
                                 {modalState.confirmLabel}
                             </Button>
                         </div>

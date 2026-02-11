@@ -15,10 +15,10 @@
     display: grid;
     grid-template-columns: var(--students-grid);
     gap: 0.5rem;
-    background-color: #f8fafc;
+    background-color: var(--bg-subtle);
     padding: 0.75rem 1rem;
     border-bottom: 1px solid var(--border-color);
-    color: #64748b;
+    color: var(--table-head-color);
     font-weight: 600;
     font-size: 0.75rem;
     text-transform: uppercase;
@@ -55,12 +55,12 @@
     width: 36px;
     height: 36px;
     border-radius: 999px;
-    background-color: #e2e8f0;
+    background-color: var(--avatar-bg);
     display: inline-flex;
     align-items: center;
     justify-content: center;
     font-weight: 700;
-    color: #1f2937;
+    color: var(--avatar-text);
     margin-right: 0.5rem;
 }
 
@@ -92,9 +92,21 @@
     font-weight: 700;
     text-transform: uppercase;
     letter-spacing: 0.04em;
-    color: #9a3412;
-    background: #ffedd5;
-    border: 1px solid #fdba74;
+    color: var(--status-warning);
+    background: var(--status-warning-bg);
+    border: 1px solid var(--status-warning-border);
+}
+
+.unenrolledFlagWithdrawn {
+    color: var(--status-warning);
+    background: var(--status-warning-bg);
+    border: 1px solid var(--status-warning-border);
+}
+
+.unenrolledFlagNotEnrolled {
+    color: var(--status-info);
+    background: var(--status-info-bg);
+    border: 1px solid var(--status-info);
 }
 
 .smallCell {
@@ -222,40 +234,208 @@
 }
 
 .insightCard {
+    --insight-fill: 0%;
+    --insight-fill-color: var(--status-info);
     display: flex;
-    gap: 0.75rem;
-    align-items: center;
+    gap: 0;
+    align-items: stretch;
     padding: 0.9rem 1rem;
     border: 1px solid var(--border-color);
     border-radius: 0.65rem;
     background-color: var(--bg-card);
     box-shadow: var(--shadow-sm);
+    position: relative;
+    overflow: hidden;
+    isolation: isolate;
+}
+
+.insightCard::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    height: var(--insight-fill);
+    background: linear-gradient(
+        180deg,
+        color-mix(in srgb, var(--insight-fill-color) 6%, transparent),
+        color-mix(in srgb, var(--insight-fill-color) 18%, transparent)
+    );
+    z-index: 0;
+    pointer-events: none;
+}
+
+.insightCard[data-tone="success"] {
+    --insight-fill-color: var(--status-success);
+}
+
+.insightCard[data-tone="warning"] {
+    --insight-fill-color: var(--status-warning);
+}
+
+.insightCard[data-tone="accent"] {
+    --insight-fill-color: var(--status-accent);
+}
+
+.insightCard[data-tone="info"],
+.insightCard[data-tone="primary"] {
+    --insight-fill-color: var(--status-info);
 }
 
 .insightIcon {
-    width: 36px;
-    height: 36px;
-    border-radius: 0.75rem;
+    width: 30px;
+    height: 30px;
+    border-radius: 0.62rem;
     display: grid;
     place-items: center;
-    color: #0f172a;
+    color: var(--text-primary);
+    flex: 0 0 auto;
 }
 
-.insightIcon[data-tone="primary"] { background: #e0f2fe; color: #0ea5e9; }
-.insightIcon[data-tone="success"] { background: #ecfdf3; color: #16a34a; }
-.insightIcon[data-tone="warning"] { background: #fef9c3; color: #ca8a04; }
-.insightIcon[data-tone="info"] { background: #ede9fe; color: #7c3aed; }
-.insightIcon[data-tone="accent"] { background: #fff1f2; color: #e11d48; }
+.insightBody {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+    justify-content: center;
+    min-width: 0;
+    flex: 1;
+    min-height: 3rem;
+    width: 100%;
+    position: relative;
+    z-index: 1;
+}
+
+.insightLabelRow {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    min-height: 1.2rem;
+}
+
+.insightIcon[data-tone="primary"] { background: var(--status-info-bg); color: var(--status-info); }
+.insightIcon[data-tone="success"] { background: var(--status-success-bg); color: var(--status-success); }
+.insightIcon[data-tone="warning"] { background: var(--status-warning-bg); color: var(--status-warning); }
+.insightIcon[data-tone="info"] { background: var(--bg-soft); color: var(--secondary); }
+.insightIcon[data-tone="accent"] { background: var(--status-accent-bg); color: var(--status-accent); }
 
 .insightLabel {
     font-size: 0.85rem;
     color: var(--text-secondary);
+    line-height: 1.2;
+    min-height: 1.05rem;
 }
 
 .insightValue {
-    font-size: 1.3rem;
-    font-weight: 700;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: fit-content;
+    min-width: 2.9rem;
+    padding: 0.24rem 0.58rem;
+    border: 1px solid color-mix(in srgb, var(--primary) 20%, var(--border-color));
+    border-radius: 999px;
+    background: color-mix(in srgb, var(--bg-card) 72%, var(--bg-hover) 28%);
+    box-shadow: 0 10px 16px -14px color-mix(in srgb, var(--primary) 40%, transparent);
+    font-family: var(--font-heading);
+    font-size: 1.35rem;
+    line-height: 1;
+    font-weight: var(--font-weight-extrabold);
+    letter-spacing: -0.01em;
+    font-variant-numeric: tabular-nums;
     color: var(--text-primary);
+    min-height: 1.9rem;
+    margin-left: auto;
+}
+
+.insightValueSplit {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
+    margin-top: 0.1rem;
+    flex-wrap: nowrap;
+    min-height: 1.9rem;
+    width: 100%;
+}
+
+.insightValueCount {
+    display: inline-flex;
+    align-items: center;
+    min-height: 1.9rem;
+    font-family: var(--font-heading);
+    font-size: 1.4rem;
+    font-weight: var(--font-weight-extrabold);
+    line-height: 1;
+    letter-spacing: -0.01em;
+    font-variant-numeric: tabular-nums;
+    color: var(--text-primary);
+    transform: translateY(0.02em);
+}
+
+.insightValueSplit > :only-child {
+    margin-left: auto;
+}
+
+.insightPercentBadge {
+    --badge-width: 2.35rem;
+    --badge-height: 1.9rem;
+    --badge-font-size: 1.2rem;
+    --badge-fg: var(--status-info);
+    --badge-bg: var(--status-info-bg);
+    --badge-ring: rgba(14, 165, 233, 0.3);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: var(--badge-width);
+    height: var(--badge-height);
+    padding: 0.2rem;
+    border-radius: 2.35rem;
+    border: 1px solid var(--badge-ring);
+    font-family: var(--font-heading);
+    font-size: var(--badge-font-size);
+    line-height: 1;
+    font-weight: var(--font-weight-extrabold);
+    letter-spacing: -0.01em;
+    font-variant-numeric: tabular-nums;
+    color: var(--badge-fg);
+    background: var(--badge-bg);
+    box-shadow: 0 8px 18px -12px color-mix(in srgb, var(--badge-fg) 55%, transparent);
+}
+
+.insightPercentBadgeText {
+    display: block;
+    line-height: 1;
+    transform: translateY(-0.04em);
+}
+
+.insightPercentEnrolled {
+    --badge-fg: var(--status-success);
+    --badge-bg: var(--status-success-bg);
+    --badge-ring: rgba(22, 163, 74, 0.28);
+}
+
+.insightPercentInfo {
+    --badge-fg: var(--status-info);
+    --badge-bg: var(--status-info-bg);
+    --badge-ring: rgba(14, 165, 233, 0.28);
+}
+
+.insightPercentWarning {
+    --badge-fg: var(--status-warning);
+    --badge-bg: var(--status-warning-bg);
+    --badge-ring: rgba(180, 83, 9, 0.28);
+}
+
+.insightPercentDanger {
+    --badge-fg: var(--status-danger);
+    --badge-bg: var(--status-danger-bg);
+    --badge-ring: rgba(185, 28, 28, 0.26);
+}
+
+.insightPercentAccent {
+    --badge-fg: var(--status-accent);
+    --badge-bg: var(--status-accent-bg);
+    --badge-ring: color-mix(in srgb, var(--status-accent) 30%, transparent);
 }
 
 .filtersBar {
@@ -276,7 +456,7 @@
 
 .filterChip {
     border: 1px solid var(--border-color);
-    background: #f8fafc;
+    background: var(--bg-subtle);
     color: var(--text-secondary);
     padding: 0.35rem 0.8rem;
     border-radius: 999px;
@@ -286,14 +466,14 @@
 }
 
 .filterChip:hover {
-    border-color: #cbd5e1;
+    border-color: var(--selection-border);
 }
 
 .filterChipActive {
-    background: #e0f2fe;
-    color: #0ea5e9;
-    border-color: #0ea5e9;
-    box-shadow: 0 4px 10px rgba(14, 165, 233, 0.15);
+    background: var(--selection-bg);
+    color: var(--selection-text);
+    border-color: var(--selection-border);
+    box-shadow: var(--shadow-sm);
 }
 
 .pagination {
@@ -395,8 +575,8 @@
 }
 
 .rowsOptionActive {
-    background-color: #e6f4ff;
-    color: #0369a1;
+    background-color: var(--selection-bg);
+    color: var(--selection-text);
 }
 
 .paginationButton {
@@ -409,16 +589,16 @@
 
 .pageSelect {
     border: 1px solid var(--border-color);
-    background: #e6f4ff;
-    color: #0369a1;
+    background: var(--selection-bg);
+    color: var(--selection-text);
     padding: 0.3rem 0.5rem;
     border-radius: 0.25rem;
     font-weight: 600;
 }
 
 .pageNumActive {
-    background-color: #e6f4ff;
-    color: #0369a1;
+    background-color: var(--selection-bg);
+    color: var(--selection-text);
 }
 
 
@@ -435,7 +615,7 @@
 }
 
 .tableRowSelected {
-    background-color: #e0f2fe;
+    background-color: var(--selection-bg);
 }
 
 .expandHeader, .expandCell {
@@ -476,13 +656,13 @@
 }
 
 .tableRow:focus {
-    outline: 2px solid rgba(3, 105, 161, 0.12);
+    outline: 2px solid var(--focus-ring-outline);
     outline-offset: 2px;
 }
 
 
 .tableRowExpanded {
-    background-color: #f1f5f9;
+    background-color: var(--bg-soft);
 }
 
 .tableRowInactive {
@@ -519,12 +699,12 @@
     height: 6px;
     border-radius: 0.25rem;
     overflow: hidden;
-    background-color: #e2e8f0;
+    background-color: var(--border-color);
     appearance: none;
 }
 
 .attendanceProgress::-webkit-progress-bar {
-    background-color: #e2e8f0;
+    background-color: var(--border-color);
     border-radius: 0.25rem;
 }
 
@@ -556,15 +736,15 @@
 }
 
 .attendanceValuehigh {
-    color: #10b981;
+    color: var(--status-success);
 }
 
 .attendanceValuemid {
-    color: #f59e0b;
+    color: var(--status-warning);
 }
 
 .attendanceValuelow {
-    color: #ef4444;
+    color: var(--status-danger);
 }
 
 .attendanceEmpty {
@@ -654,11 +834,11 @@
 }
 
 .statusActive {
-    color: #16a34a;
+    color: var(--status-success);
 }
 
 .statusInactive {
-    color: #64748b;
+    color: var(--text-secondary);
 }
 
 .sectionProgressRow {
@@ -694,10 +874,188 @@
     margin-top: 1.5rem;
 }
 
+.enrollPromptPanel {
+    max-width: 760px;
+}
+
+.enrollPromptBody {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.enrollSelectionSticky {
+    position: sticky;
+    top: 0;
+    z-index: 3;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+    padding: 0.55rem 0.7rem;
+    border: 1px solid var(--border-color);
+    border-radius: 0.6rem;
+    background: color-mix(in srgb, var(--bg-card) 92%, var(--bg-main) 8%);
+    box-shadow: 0 6px 14px -12px rgba(15, 23, 42, 0.45);
+}
+
+.enrollSelectionLabel {
+    font-size: 0.72rem;
+    font-weight: 800;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    color: var(--text-secondary);
+}
+
+.enrollSelectionEmpty {
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--text-secondary);
+}
+
+.enrollSelectionTags {
+    display: inline-flex;
+    flex-wrap: wrap;
+    gap: 0.35rem;
+}
+
+.enrollSelectionTag {
+    display: inline-flex;
+    align-items: center;
+    border: 1px solid var(--selection-border);
+    background: var(--selection-bg);
+    color: var(--selection-text);
+    border-radius: 999px;
+    padding: 0.15rem 0.55rem;
+    font-size: 0.75rem;
+    font-weight: 700;
+    line-height: 1.2;
+    max-width: 260px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.enrollPromptHint {
+    margin: 0;
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+}
+
+.enrollPromptError {
+    padding: 0.5rem 0.75rem;
+    border-radius: 0.5rem;
+    background: var(--status-danger-bg);
+    color: var(--status-danger);
+    border: 1px solid var(--status-danger-border);
+    font-weight: 600;
+}
+
+.enrollPromptEmpty {
+    padding: 0.85rem;
+    border-radius: 0.6rem;
+    border: 1px dashed var(--border-color);
+    background: var(--bg-subtle);
+    color: var(--text-secondary);
+    text-align: center;
+}
+
+.enrollCourseList {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    max-height: 360px;
+    overflow: auto;
+    padding-right: 0.2rem;
+}
+
+.enrollCourseGroup {
+    border: 1px solid var(--border-color);
+    border-radius: 0.65rem;
+    padding: 0.75rem;
+    background: var(--bg-card);
+}
+
+.enrollCourseHeader {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.5rem;
+    gap: 0.75rem;
+}
+
+.enrollCourseName {
+    font-weight: 700;
+    color: var(--text-primary);
+}
+
+.enrollCourseMeta {
+    font-size: 0.72rem;
+    color: var(--text-secondary);
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+}
+
+.enrollSectionOptions {
+    display: grid;
+    gap: 0.5rem;
+}
+
+.enrollSectionOption {
+    border: 1px solid var(--border-color);
+    background: var(--bg-subtle);
+    border-radius: 0.55rem;
+    padding: 0.55rem 0.7rem;
+    text-align: left;
+    cursor: pointer;
+    transition: all 0.12s ease;
+}
+
+.enrollSectionOption:hover {
+    border-color: var(--selection-border);
+    background: var(--bg-hover);
+}
+
+.enrollSectionOptionActive {
+    border-color: var(--selection-border);
+    background: var(--selection-bg);
+    color: var(--selection-text);
+    box-shadow: var(--shadow-sm);
+}
+
+.enrollSectionName {
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+.enrollSectionMeta {
+    font-size: 0.78rem;
+    color: var(--text-secondary);
+    margin-top: 0.1rem;
+}
+
+.enrollSectionOptionActive .enrollSectionName,
+.enrollSectionOptionActive .enrollSectionMeta {
+    color: var(--selection-text);
+}
+
+.enrollPromptSummary {
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+    text-align: right;
+}
+
+.enrollPromptActions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 0.5rem;
+    margin-top: 0.75rem;
+}
+
 .dragSelectionBox {
     position: fixed;
-    border: 1px solid #0ea5e9;
-    background-color: rgba(14, 165, 233, 0.16);
+    border: 1px solid var(--selection-border);
+    background-color: var(--selection-bg);
     border-radius: 0.25rem;
     pointer-events: none;
     z-index: 1000;

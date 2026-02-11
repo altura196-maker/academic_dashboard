@@ -104,6 +104,17 @@ export const Attendance = () => {
         }
     }, [selectedSectionId, selectedDate]);
 
+    useEffect(() => {
+        if (!selectedSectionId) {
+            setSelectedIds(prev => (prev.length === 0 ? prev : []));
+            return;
+        }
+        setSelectedIds(prev => {
+            const next = prev.filter(id => StorageService.getEffectiveStudentStatus(id, selectedSectionId));
+            return next.length === prev.length ? prev : next;
+        });
+    }, [selectedSectionId, enrolledStudents]);
+
     const getActiveStudentIds = (sectionId: string) => {
         return StorageService.getActiveStudentIdsForSection(sectionId);
     };
@@ -171,8 +182,9 @@ export const Attendance = () => {
     }, [hasUnsavedChanges, selectedIds.length]);
 
     const loadInitialData = () => {
+        const activeSections = StorageService.getActiveSections();
         setCourses(StorageService.getCourses());
-        setSections(StorageService.getSections());
+        setSections(activeSections);
     };
 
     const formatStudentName = (name: string) => {
@@ -230,6 +242,9 @@ export const Attendance = () => {
     };
 
     const toggleSelection = (studentId: string) => {
+        if (!selectedSectionId || !StorageService.getEffectiveStudentStatus(studentId, selectedSectionId)) {
+            return;
+        }
         setSelectedIds(prev =>
             prev.includes(studentId)
                 ? prev.filter(id => id !== studentId)
@@ -239,8 +254,15 @@ export const Attendance = () => {
 
     const markSelected = (present: boolean) => {
         if (selectedIds.length === 0) return;
+        const activeSelectedIds = selectedSectionId
+            ? selectedIds.filter(id => StorageService.getEffectiveStudentStatus(id, selectedSectionId))
+            : [];
+        if (activeSelectedIds.length === 0) {
+            setSelectedIds([]);
+            return;
+        }
         const newRecords = { ...attendanceRecords };
-        selectedIds.forEach(id => {
+        activeSelectedIds.forEach(id => {
             newRecords[id] = present;
         });
         setAttendanceRecords(newRecords);
@@ -301,6 +323,16 @@ export const Attendance = () => {
 
     // Filter courses/sections/students based on search
     const getCourseName = (id: string) => courses.find(c => c.id === id)?.name || '';
+    const getSectionDisplayName = (section?: Section) => {
+        if (!section) return 'Unknown';
+        const sectionName = (section.name || '').trim();
+        const courseName = getCourseName(section.courseId);
+        if (!courseName || !sectionName) return sectionName || 'Unknown';
+        const normalizedSection = sectionName.toLowerCase();
+        const normalizedPrefix = `${courseName.toLowerCase()} - `;
+        if (normalizedSection.startsWith(normalizedPrefix)) return sectionName;
+        return `${courseName} - ${sectionName}`;
+    };
 
     const filteredCourses = courses.filter(c =>
         matchesSearch(searchTerm, c.name)
@@ -314,12 +346,15 @@ export const Attendance = () => {
         : enrolledStudents;
 
     const selectAll = () => {
-        const targetStudents = filteredEnrolledStudents;
-        if (selectedIds.length === targetStudents.length) {
+        const targetStudentIds = filteredEnrolledStudents
+            .map(student => student.id)
+            .filter(studentId => activeStudentIds.includes(studentId));
+        if (targetStudentIds.length === 0) {
             setSelectedIds([]);
-        } else {
-            setSelectedIds(targetStudents.map(s => s.id));
+            return;
         }
+        const allSelected = targetStudentIds.every(id => selectedIds.includes(id));
+        setSelectedIds(allSelected ? [] : targetStudentIds);
     };
 
     const isMarkingView = mainTab === 'hierarchy' && viewMode === 'dashboard' && activeTab === 'mark';
@@ -421,6 +456,7 @@ export const Attendance = () => {
                 const nextSelectionSet = new Set(dragState.initialSelected);
                 Object.entries(studentChipRefs.current).forEach(([studentId, node]) => {
                     if (!node) return;
+                    if (node.dataset.disabled === 'true') return;
                     if (boxIntersectsRect(box, node.getBoundingClientRect())) {
                         nextSelectionSet.add(studentId);
                     }
@@ -520,7 +556,7 @@ export const Attendance = () => {
                 <>
                     <ChevronRight size={14} />
                     <span className={styles.breadcrumbCurrent}>
-                        {currentSection?.name.split(' - ')[1] || currentSection?.name}
+                        {getSectionDisplayName(currentSection)}
                     </span>
                 </>
             )}
@@ -582,7 +618,7 @@ export const Attendance = () => {
                     className={styles.sectionCard}
                 >
                     <div className={styles.sectionCardHeader}>
-                        <h3 className={styles.sectionCardTitle}>{section.name.split(' - ')[1] || section.name}</h3>
+                        <h3 className={styles.sectionCardTitle}>{getSectionDisplayName(section)}</h3>
                         <div className={styles.sectionCardBadge}>
                             {StorageService.getActiveStudentIdsForSection(section.id).length} Students
                         </div>
@@ -762,6 +798,7 @@ export const Attendance = () => {
                                         No students match your search.
                                     </div>
                                 ) : filteredEnrolledStudents.map(student => {
+                                    const isActive = activeStudentIds.includes(student.id);
                                     const isPresent = !!attendanceRecords[student.id];
                                     const isSelected = selectedIds.includes(student.id);
 
@@ -770,12 +807,17 @@ export const Attendance = () => {
                                             key={student.id}
                                             ref={node => setStudentChipRef(student.id, node)}
                                             data-student-id={student.id}
-                                            onClick={() => handleChipToggle(student.id)}
+                                            data-disabled={!isActive}
+                                            onClick={() => {
+                                                if (isActive) handleChipToggle(student.id);
+                                            }}
                                             role="button"
-                                            tabIndex={0}
-                                            aria-pressed={isSelected}
-                                            aria-label={`${formatStudentName(student.name)} ${isPresent ? 'present' : 'absent'}${isSelected ? ', selected' : ''}`}
+                                            tabIndex={isActive ? 0 : -1}
+                                            aria-pressed={isActive ? isSelected : undefined}
+                                            aria-disabled={!isActive}
+                                            aria-label={`${formatStudentName(student.name)}${isActive ? ` ${isPresent ? 'present' : 'absent'}${isSelected ? ', selected' : ''}` : ' withdrawn, disabled'}`}
                                             onKeyDown={(e) => {
+                                                if (!isActive) return;
                                                 if (e.key === 'Enter' || e.key === ' ') {
                                                     e.preventDefault();
                                                     toggleSelection(student.id);
@@ -783,9 +825,10 @@ export const Attendance = () => {
                                             }}
                                             className={[
                                                 styles.studentChip,
+                                                !isActive ? styles.studentChipDisabled : '',
                                                 isSelected ? styles.studentChipSelected : '',
-                                                !isSelected && isPresent ? styles.studentChipPresent : '',
-                                                !isSelected && !isPresent ? styles.studentChipAbsent : ''
+                                                !isSelected && isActive && isPresent ? styles.studentChipPresent : '',
+                                                !isSelected && isActive && !isPresent ? styles.studentChipAbsent : ''
                                             ].filter(Boolean).join(' ')}
                                         >
                                             <div className={styles.studentChipAvatar}>
@@ -852,7 +895,8 @@ export const Attendance = () => {
     );
 
     const renderTimelineHistory = () => {
-        const allAttendance = StorageService.getAttendance();
+        const activeSectionIds = new Set(sections.map(section => section.id));
+        const allAttendance = StorageService.getAttendance().filter(record => activeSectionIds.has(record.sectionId));
         const allStudents = StorageService.getStudents();
         const groupedByDate: { [date: string]: AttendanceType[] } = {};
 
@@ -944,15 +988,15 @@ export const Attendance = () => {
                                                 isExpanded ? styles.timelineCardHeaderActive : ''
                                             ].filter(Boolean).join(' ')}
                                         >
-                                            <div className={styles.timelineCardTitleRow}>
-                                                <div>
-                                                    <div className={styles.timelineCardCourse}>{course?.name || 'Unknown'}</div>
-                                                    <div className={styles.timelineCardTitle}>{section?.name || 'Unknown'}</div>
-                                                </div>
-                                                <div className={styles.timelineMetric}>
-                                                    <div className={[
-                                                        styles.timelineMetricValue,
-                                                        styles[`timelineMetric${attendanceStatus}`]
+                                                <div className={styles.timelineCardTitleRow}>
+                                                    <div>
+                                                        <div className={styles.timelineCardCourse}>{course?.name || 'Unknown'}</div>
+                                                        <div className={styles.timelineCardTitle}>{getSectionDisplayName(section)}</div>
+                                                    </div>
+                                                    <div className={styles.timelineMetric}>
+                                                        <div className={[
+                                                            styles.timelineMetricValue,
+                                                            styles[`timelineMetric${attendanceStatus}`]
                                                     ].join(' ')}>{percentage}%</div>
                                                     <div className={styles.timelineMetricLabel}>ATTENDANCE</div>
                                                 </div>
@@ -1006,7 +1050,8 @@ export const Attendance = () => {
     };
 
     const renderDrilldownHistory = () => {
-        const allAttendance = StorageService.getAttendance();
+        const activeSectionIds = new Set(sections.map(section => section.id));
+        const allAttendance = StorageService.getAttendance().filter(record => activeSectionIds.has(record.sectionId));
         const allStudents = StorageService.getStudents();
         const groupedByDate: { [date: string]: AttendanceType[] } = {};
 
@@ -1117,7 +1162,7 @@ export const Attendance = () => {
                                                         <ChevronRight size={18} className={isSectionExpanded ? styles.drilldownSectionChevronOpen : styles.drilldownSectionChevron} />
                                                         <div>
                                                             <div className={styles.drilldownSectionCourse}>{course?.name}</div>
-                                                            <div className={styles.drilldownSectionTitle}>{section?.name}</div>
+                                                            <div className={styles.drilldownSectionTitle}>{getSectionDisplayName(section)}</div>
                                                         </div>
                                                     </div>
                                                     <div className={styles.drilldownSectionStats}>

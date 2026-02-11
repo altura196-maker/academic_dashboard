@@ -1,0 +1,108 @@
+.controlsWrap {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 0.65rem;
+    flex-wrap: wrap;
+}
+
+.visualModeWrap {
+    display: flex;
+    align-items: center;
+    gap: 0.45rem;
+    flex-wrap: wrap;
+}
+
+.visualModeLabel {
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    color: var(--text-secondary);
+}
+
+.visualModeGroup {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.2rem;
+    padding: 0.2rem;
+    border: 1px solid var(--border-color);
+    border-radius: 999px;
+    background: color-mix(in srgb, var(--bg-card) 88%, var(--bg-hover) 12%);
+}
+
+.visualModeButton {
+    border: none;
+    background: transparent;
+    color: var(--text-secondary);
+    font-weight: 700;
+    font-size: 0.74rem;
+    line-height: 1;
+    padding: 0.33rem 0.6rem;
+    border-radius: 999px;
+    cursor: pointer;
+    transition: color 0.2s ease, background-color 0.2s ease;
+}
+
+.visualModeButton:hover {
+    color: var(--text-primary);
+}
+
+.visualModeButtonActive {
+    color: var(--selection-text);
+    background: var(--selection-bg);
+}
+
+.actionMenuWrap {
+    position: relative;
+}
+
+.menuButton {
+    min-width: 2rem;
+    min-height: 2rem;
+    padding: 0.35rem;
+    border-radius: 0.6rem;
+}
+
+.menuPanel {
+    position: absolute;
+    right: 0;
+    top: calc(100% + 0.4rem);
+    min-width: 180px;
+    border: 1px solid var(--border-color);
+    border-radius: 0.65rem;
+    background: var(--bg-card);
+    box-shadow: var(--shadow-md);
+    padding: 0.25rem;
+    z-index: 20;
+}
+
+.menuItem {
+    width: 100%;
+    border: none;
+    background: transparent;
+    color: var(--text-primary);
+    display: flex;
+    align-items: center;
+    gap: 0.45rem;
+    font-size: 0.84rem;
+    font-weight: 600;
+    border-radius: 0.5rem;
+    padding: 0.45rem 0.55rem;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+}
+
+.menuItem:hover {
+    background: var(--bg-hover);
+}
+
+.menuItemDanger {
+    color: var(--status-danger);
+}
+
+@media (max-width: 880px) {
+    .controlsWrap {
+        justify-content: flex-start;
+    }
+}

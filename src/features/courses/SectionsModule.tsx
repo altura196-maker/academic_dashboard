@@ -138,8 +138,11 @@ export const SectionsModule = ({ courseId, hideHeader = false, onSelectSection, 
 
     const loadData = () => {
         const loadedSections = StorageService.getSections();
+        const activeSections = loadedSections.filter(section => !isSectionFinished(section));
         setAllSections(loadedSections);
-        const visibleSections = courseId ? loadedSections.filter(s => s.courseId === courseId) : loadedSections;
+        const visibleSections = courseId
+            ? activeSections.filter(section => section.courseId === courseId)
+            : activeSections;
         setSections(visibleSections);
         setCourses(StorageService.getCourses());
         setProfessors(StorageService.getProfessors());
@@ -713,7 +716,7 @@ export const SectionDetail = ({ sectionId, onBack, onUnsavedChanges, searchTerm 
     }, [pendingTransfers, pendingStatusChanges, onUnsavedChanges]);
 
     const loadData = () => {
-        const sections = StorageService.getSections();
+        const sections = StorageService.getActiveSections();
         setAllSections(sections);
         const foundSection = sections.find(s => s.id === sectionId);
         setSection(foundSection || null);

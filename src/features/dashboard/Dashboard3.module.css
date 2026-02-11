@@ -1,0 +1,182 @@
+.splitGrid {
+    display: grid;
+    grid-template-columns: minmax(320px, 0.95fr) minmax(0, 1.35fr);
+    gap: 0.9rem;
+    align-items: start;
+}
+
+.leftColumn {
+    display: flex;
+    flex-direction: column;
+    gap: 0.8rem;
+}
+
+.snapshotCard,
+.distributionCard,
+.performanceCard {
+    padding: 0.85rem;
+}
+
+.snapshotBody,
+.distributionBody,
+.performanceBody {
+    display: flex;
+    flex-direction: column;
+    gap: 0.72rem;
+}
+
+.panelTitle {
+    margin: 0;
+    font-size: 1.05rem;
+    color: var(--text-primary);
+}
+
+.snapshotList {
+    display: grid;
+    gap: 0.52rem;
+}
+
+.snapshotRow {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.6rem;
+    border: 1px solid var(--border-color);
+    border-radius: 0.65rem;
+    padding: 0.48rem 0.58rem;
+    background: color-mix(in srgb, var(--bg-card) 86%, var(--bg-hover) 14%);
+}
+
+.snapshotLabel {
+    color: var(--text-secondary);
+    font-size: 0.84rem;
+    font-weight: 600;
+}
+
+.snapshotValue {
+    font-size: 1.22rem;
+}
+
+.distributionRow {
+    border: 1px solid var(--border-color);
+    border-radius: 0.7rem;
+    padding: 0.52rem;
+    background: color-mix(in srgb, var(--bg-card) 86%, var(--bg-hover) 14%);
+    display: flex;
+    flex-direction: column;
+    gap: 0.46rem;
+}
+
+.distributionHeader {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.6rem;
+}
+
+.distributionValueWrap {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+}
+
+.performanceHeader {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+}
+
+.performanceSubtitle {
+    margin: 0.28rem 0 0;
+    font-size: 0.82rem;
+    color: var(--text-secondary);
+}
+
+.overallWrap {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+}
+
+.overallLabel {
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+
+.performanceMeta,
+.courseMeta {
+    margin: 0;
+    color: var(--text-secondary);
+    display: inline-flex;
+    align-items: center;
+    gap: 0.2rem;
+    font-size: 0.82rem;
+}
+
+.metaValue {
+    font-family: var(--font-heading);
+    font-size: 0.93rem;
+    line-height: 1;
+    font-weight: var(--font-weight-bold);
+    color: var(--text-primary);
+    font-variant-numeric: tabular-nums;
+}
+
+.courseList {
+    display: grid;
+    gap: 0.65rem;
+}
+
+.courseRow {
+    padding: 0.74rem;
+}
+
+.courseRowBody {
+    display: flex;
+    flex-direction: column;
+    gap: 0.52rem;
+}
+
+.courseRowTop {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 0.5rem;
+}
+
+.courseTitle {
+    margin: 0;
+    font-size: 0.95rem;
+    line-height: 1.2;
+    color: var(--text-primary);
+}
+
+.emptyState {
+    border: 1px dashed var(--border-color);
+    border-radius: 0.75rem;
+    padding: 1rem;
+    text-align: center;
+    font-weight: 600;
+    color: var(--text-secondary);
+    background: color-mix(in srgb, var(--bg-card) 84%, var(--bg-hover) 16%);
+}
+
+@media (max-width: 1180px) {
+    .splitGrid {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 640px) {
+    .snapshotCard,
+    .distributionCard,
+    .performanceCard,
+    .courseRow {
+        padding: 0.72rem;
+    }
+}

@@ -28,6 +28,8 @@
   --bg-card: #ffffff;
   --bg-primary: #f8fafc;
   /* White */
+  --bg-subtle: #f8fafc;
+  --bg-soft: #f1f5f9;
   --bg-input: #ffffff;
   /* White */
   --bg-hover: #f0f9ff;
@@ -47,6 +49,25 @@
   --secondary: #3b82f6;
   /* Friendly blue */
   --danger: #ef4444;
+  --focus-ring-outline: rgba(59, 130, 246, 0.55);
+  --focus-ring-shadow: rgba(255, 138, 61, 0.2);
+  --selection-bg: #e0f2fe;
+  --selection-text: #0369a1;
+  --selection-border: #0ea5e9;
+  --status-success: #16a34a;
+  --status-success-bg: #ecfdf3;
+  --status-warning: #b45309;
+  --status-warning-bg: #ffedd5;
+  --status-warning-border: #fdba74;
+  --status-danger: #b91c1c;
+  --status-danger-bg: #fef2f2;
+  --status-danger-border: #fecaca;
+  --status-info: #0ea5e9;
+  --status-info-bg: #e0f2fe;
+  --status-accent: #e11d48;
+  --status-accent-bg: #fff1f2;
+  --avatar-bg: #e2e8f0;
+  --avatar-text: #1f2937;
 
   --button-primary-bg: var(--primary);
   --button-primary-border: var(--primary);
@@ -161,9 +182,9 @@ select:focus-visible,
 textarea:focus-visible,
 [role="button"]:focus-visible,
 [tabindex]:focus-visible {
-  outline: 3px solid rgba(59, 130, 246, 0.45);
+  outline: 3px solid var(--focus-ring-outline);
   outline-offset: 2px;
-  box-shadow: 0 0 0 4px rgba(255, 138, 61, 0.15);
+  box-shadow: 0 0 0 4px var(--focus-ring-shadow);
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -467,6 +488,8 @@ main {
   --bg-main: #0a0f1f;
   --bg-sidebar: #0f172a;
   --bg-card: #141c2f;
+  --bg-subtle: #17233a;
+  --bg-soft: #1b2842;
   --bg-input: #111a2e;
   --bg-hover: #1a2640;
   --bg-primary: #0f172a;
@@ -480,6 +503,25 @@ main {
   --primary-hover: #f97316;
   --secondary: #60a5fa;
   --danger: #f87171;
+  --focus-ring-outline: rgba(125, 211, 252, 0.65);
+  --focus-ring-shadow: rgba(255, 138, 61, 0.28);
+  --selection-bg: rgba(56, 189, 248, 0.18);
+  --selection-text: #7dd3fc;
+  --selection-border: #38bdf8;
+  --status-success: #4ade80;
+  --status-success-bg: rgba(34, 197, 94, 0.16);
+  --status-warning: #fbbf24;
+  --status-warning-bg: rgba(251, 191, 36, 0.17);
+  --status-warning-border: rgba(251, 191, 36, 0.32);
+  --status-danger: #fca5a5;
+  --status-danger-bg: rgba(248, 113, 113, 0.14);
+  --status-danger-border: rgba(248, 113, 113, 0.3);
+  --status-info: #7dd3fc;
+  --status-info-bg: rgba(56, 189, 248, 0.18);
+  --status-accent: #fda4af;
+  --status-accent-bg: rgba(244, 63, 94, 0.16);
+  --avatar-bg: #24324c;
+  --avatar-text: #e2e8f0;
 
   --icon-primary: var(--text-primary);
   --icon-muted: var(--text-secondary);
@@ -546,6 +588,18 @@ main {
 
 ::-webkit-scrollbar-thumb:hover {
   background: #a5b4fc;
+}
+
+:root[data-theme="dark"] ::-webkit-scrollbar-track {
+  background: rgba(148, 163, 184, 0.12);
+}
+
+:root[data-theme="dark"] ::-webkit-scrollbar-thumb {
+  background: #475569;
+}
+
+:root[data-theme="dark"] ::-webkit-scrollbar-thumb:hover {
+  background: #64748b;
 }
 
 @media print {

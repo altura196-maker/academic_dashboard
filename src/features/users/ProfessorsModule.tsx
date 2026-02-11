@@ -159,7 +159,7 @@ export const ProfessorsModule = ({ hideHeader = false }: ProfessorsModuleProps) 
                         <TableCell>
                             <div className={styles.professorRow}>
                                 <div className={styles.professorAvatar}>
-                                    <UserCheck size={16} color="#fbbf24" />
+                                    <UserCheck size={16} color="var(--status-warning)" />
                                 </div>
                                 <span className={styles.professorName}>{professor.name}</span>
                             </div>

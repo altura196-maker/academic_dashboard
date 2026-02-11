@@ -1,6 +1,6 @@
-import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
+import React, { useState, useEffect, useMemo, useCallback, useRef, type CSSProperties } from 'react';
 import { StorageService } from '../../shared/utils/storage';
-import { Student, Section, Attendance, Enrollment } from '../../shared/utils/types';
+import { Course, Student, Section, Attendance, Enrollment, StudentEnrollmentStatus } from '../../shared/utils/types';
 import { Button } from '../../shared/components/Button';
 import { Modal } from '../../shared/components/Modal';
 import { Input, Select } from '../../shared/components/Input';
@@ -36,12 +36,17 @@ export const StudentsModule = ({ sectionId, courseId, hideHeader = false }: Stud
     // Data
     const [students, setStudents] = useState<Student[]>([]);
     const [sections, setSections] = useState<Section[]>([]);
+    const [courses, setCourses] = useState<Course[]>([]);
     const [attendanceData, setAttendanceData] = useState<Attendance[]>([]);
     const [enrollments, setEnrollments] = useState<Enrollment[]>([]);
     const [expandedStudentId, setExpandedStudentId] = useState<string | null>(null);
 
     // Modals
     const [isModalOpen, setIsModalOpen] = useState(false);
+    const [isEnrollPromptOpen, setIsEnrollPromptOpen] = useState(false);
+    const [enrollTargetStudent, setEnrollTargetStudent] = useState<Student | null>(null);
+    const [enrollSelectionByCourse, setEnrollSelectionByCourse] = useState<Record<string, string>>({});
+    const [enrollPromptError, setEnrollPromptError] = useState('');
 
     // State
     const [editingStudent, setEditingStudent] = useState<Student | null>(null);
@@ -56,7 +61,7 @@ export const StudentsModule = ({ sectionId, courseId, hideHeader = false }: Stud
     });
 
     // UI: Search / Filters / Sorting / Pagination / Selection
-    const [filterActive, setFilterActive] = useState<'all' | 'active' | 'inactive'>('all');
+    const [filterActive, setFilterActive] = useState<'all' | StudentEnrollmentStatus>('all');
 
     const [sortBy, setSortBy] = useState<'name' | 'email' | 'attendance' | ''>('');
     const [sortDir, setSortDir] = useState<'asc' | 'desc'>('asc');
@@ -176,7 +181,8 @@ export const StudentsModule = ({ sectionId, courseId, hideHeader = false }: Stud
         });
 
         setStudents(sortedStudents);
-        setSections(StorageService.getSections());
+        setSections(StorageService.getActiveSections());
+        setCourses(StorageService.getCourses());
         setAttendanceData(StorageService.getAttendance());
         setEnrollments(allEnrollments);
     };
@@ -202,6 +208,71 @@ export const StudentsModule = ({ sectionId, courseId, hideHeader = false }: Stud
         setIsModalOpen(false);
         setEditingStudent(null);
         setFormData({ name: '', email: '', phone: '', birthDate: '', sex: '' });
+    };
+
+    const syncGlobalStatusFromSections = (studentId: string) => {
+        const activeSections = StorageService.getActiveSections();
+        const activeSectionIds = new Set(activeSections.map(section => section.id));
+        const ongoingEnrollments = StorageService.getEnrollments()
+            .filter(e => e.studentId === studentId && activeSectionIds.has(e.sectionId));
+        if (ongoingEnrollments.length === 0) return;
+
+        const hasActiveSection = ongoingEnrollments.some(e =>
+            StorageService.getSectionStudentActiveStatus(studentId, e.sectionId)
+        );
+        const globalActive = StorageService.getStudentActiveStatus(studentId);
+        if (!hasActiveSection && globalActive) {
+            StorageService.addStudentStatusHistory({
+                id: crypto.randomUUID(),
+                studentId,
+                isActive: false,
+                changedAt: new Date().toISOString()
+            });
+        } else if (hasActiveSection && !globalActive) {
+            StorageService.addStudentStatusHistory({
+                id: crypto.randomUUID(),
+                studentId,
+                isActive: true,
+                changedAt: new Date().toISOString()
+            });
+        }
+    };
+
+    const handleOpenEnrollPrompt = (student: Student) => {
+        const activeSections = StorageService.getActiveSections();
+        const activeSectionIds = new Set(activeSections.map(section => section.id));
+        const enrollmentsForStudent = StorageService.getEnrollments().filter(e => e.studentId === student.id);
+        const initialSelection: Record<string, string> = {};
+
+        enrollmentsForStudent.forEach(enrollment => {
+            if (!activeSectionIds.has(enrollment.sectionId)) return;
+            if (!StorageService.getSectionStudentActiveStatus(student.id, enrollment.sectionId)) return;
+            initialSelection[enrollment.courseId] = enrollment.sectionId;
+        });
+
+        setEnrollTargetStudent(student);
+        setEnrollSelectionByCourse(initialSelection);
+        setEnrollPromptError('');
+        setIsEnrollPromptOpen(true);
+    };
+
+    const handleCloseEnrollPrompt = () => {
+        setIsEnrollPromptOpen(false);
+        setEnrollTargetStudent(null);
+        setEnrollSelectionByCourse({});
+        setEnrollPromptError('');
+    };
+
+    const toggleEnrollSelection = (courseId: string, sectionId: string) => {
+        setEnrollSelectionByCourse(prev => {
+            if (prev[courseId] === sectionId) {
+                const next = { ...prev };
+                delete next[courseId];
+                return next;
+            }
+            return { ...prev, [courseId]: sectionId };
+        });
+        if (enrollPromptError) setEnrollPromptError('');
     };
 
     const handleSubmit = (e: React.FormEvent) => {
@@ -234,9 +305,10 @@ export const StudentsModule = ({ sectionId, courseId, hideHeader = false }: Stud
 
     const handleDeactivateFromTrash = async (student: Student) => {
         const confirmed = await showConfirmation({
-            title: 'Mark Student Withdrawn?',
-            message: `Are you sure you want to mark "${student.name}" as withdrawn?`,
-            confirmLabel: 'Mark withdrawn',
+            title: 'Withdraw Student?',
+            message: `Withdraw "${student.name}" from all active courses and mark them withdrawn globally?`,
+            confirmLabel: 'Withdraw student',
+            confirmVariant: 'danger',
             cancelLabel: 'Cancel'
         });
         if (!confirmed) return;
@@ -261,51 +333,161 @@ export const StudentsModule = ({ sectionId, courseId, hideHeader = false }: Stud
 
     const handleToggleGlobalStatus = async (student: Student) => {
         const isActive = StorageService.getStudentActiveStatus(student.id);
+        if (!isActive) {
+            handleOpenEnrollPrompt(student);
+            return;
+        }
         const confirmed = await showConfirmation({
-            title: isActive ? 'Mark Student Withdrawn?' : 'Mark Student Enrolled?',
-            message: `Are you sure you want to ${isActive ? 'mark' : 'set'} "${student.name}" ${isActive ? 'withdrawn' : 'enrolled'}?`,
-            confirmLabel: isActive ? 'Mark withdrawn' : 'Mark enrolled',
+            title: 'Withdraw Student?',
+            message: `Withdraw "${student.name}" from all active courses and mark them withdrawn globally?`,
+            confirmLabel: 'Withdraw student',
+            confirmVariant: 'danger',
             cancelLabel: 'Cancel'
         });
         if (!confirmed) return;
         StorageService.addStudentStatusHistory({
             id: crypto.randomUUID(),
             studentId: student.id,
-            isActive: !isActive,
+            isActive: false,
             changedAt: new Date().toISOString()
         });
-        if (isActive) {
-            const enrollmentsForStudent = StorageService.getEnrollments().filter(e => e.studentId === student.id);
-            enrollmentsForStudent.forEach(e => {
-                StorageService.addSectionStudentStatusHistory({
-                    id: crypto.randomUUID(),
-                    studentId: student.id,
-                    sectionId: e.sectionId,
-                    isActive: false,
-                    changedAt: new Date().toISOString()
-                });
+        const enrollmentsForStudent = StorageService.getEnrollments().filter(e => e.studentId === student.id);
+        enrollmentsForStudent.forEach(e => {
+            StorageService.addSectionStudentStatusHistory({
+                id: crypto.randomUUID(),
+                studentId: student.id,
+                sectionId: e.sectionId,
+                isActive: false,
+                changedAt: new Date().toISOString()
             });
-        }
+        });
         loadData();
     };
 
     const handleToggleSectionStatus = async (student: Student, section: Section) => {
-        const isActive = StorageService.getSectionStudentActiveStatus(student.id, section.id);
+        const globalActive = StorageService.getStudentActiveStatus(student.id);
+        const sectionActive = StorageService.getSectionStudentActiveStatus(student.id, section.id);
+        const effectiveActive = globalActive && sectionActive;
+        const nextEffectiveActive = !effectiveActive;
+        const activeSections = StorageService.getActiveSections();
+        const activeSectionIds = new Set(activeSections.map(s => s.id));
+        const ongoingEnrollments = StorageService.getEnrollments()
+            .filter(e => e.studentId === student.id && activeSectionIds.has(e.sectionId));
+        const activeOngoingCount = ongoingEnrollments.filter(e =>
+            StorageService.getSectionStudentActiveStatus(student.id, e.sectionId)
+        ).length;
+        const isLastActiveSection = effectiveActive && activeOngoingCount <= 1;
+
         const confirmed = await showConfirmation({
-            title: isActive ? 'Mark Student Withdrawn?' : 'Mark Student Enrolled?',
-            message: `Are you sure you want to ${isActive ? 'mark' : 'set'} "${student.name}" ${isActive ? 'withdrawn' : 'enrolled'} in "${section.name}"?`,
-            confirmLabel: isActive ? 'Mark withdrawn' : 'Mark enrolled',
+            title: nextEffectiveActive ? 'Enroll Student in Section?' : 'Withdraw Student from Section?',
+            message: nextEffectiveActive
+                ? `Enroll "${student.name}" in "${section.name}"?`
+                : `Withdraw "${student.name}" from "${section.name}"?${isLastActiveSection ? ' This will mark the student as withdrawn globally.' : ''}`,
+            confirmLabel: nextEffectiveActive ? 'Enroll in section' : 'Withdraw from section',
+            confirmVariant: nextEffectiveActive ? 'success' : 'danger',
             cancelLabel: 'Cancel'
         });
         if (!confirmed) return;
-        StorageService.addSectionStudentStatusHistory({
-            id: crypto.randomUUID(),
-            studentId: student.id,
-            sectionId: section.id,
-            isActive: !isActive,
-            changedAt: new Date().toISOString()
-        });
+
+        const changedAt = new Date().toISOString();
+        if (nextEffectiveActive) {
+            if (!globalActive) {
+                StorageService.addStudentStatusHistory({
+                    id: crypto.randomUUID(),
+                    studentId: student.id,
+                    isActive: true,
+                    changedAt
+                });
+            }
+            if (!sectionActive) {
+                StorageService.addSectionStudentStatusHistory({
+                    id: crypto.randomUUID(),
+                    studentId: student.id,
+                    sectionId: section.id,
+                    isActive: true,
+                    changedAt
+                });
+            }
+        } else if (sectionActive) {
+            StorageService.addSectionStudentStatusHistory({
+                id: crypto.randomUUID(),
+                studentId: student.id,
+                sectionId: section.id,
+                isActive: false,
+                changedAt
+            });
+        }
+
+        syncGlobalStatusFromSections(student.id);
         loadData();
+    };
+
+    const handleEnrollSubmit = () => {
+        if (!enrollTargetStudent) return;
+        const selections = Object.entries(enrollSelectionByCourse)
+            .filter(([, sectionId]) => sectionId);
+        if (selections.length === 0) {
+            setEnrollPromptError('Select at least one section to enroll.');
+            return;
+        }
+
+        const studentId = enrollTargetStudent.id;
+        const now = new Date().toISOString();
+        const enrollmentsForStudent = StorageService.getEnrollments().filter(e => e.studentId === studentId);
+        const activeSectionIds = new Set(StorageService.getActiveSections().map(section => section.id));
+        try {
+            selections.forEach(([courseId, sectionId]) => {
+                const existingEnrollment = enrollmentsForStudent.find(e => e.courseId === courseId);
+                if (existingEnrollment && existingEnrollment.sectionId !== sectionId) {
+                    if (activeSectionIds.has(existingEnrollment.sectionId)) {
+                        StorageService.unenrollStudent(existingEnrollment.sectionId, studentId);
+                    }
+                    StorageService.enrollStudent({
+                        id: crypto.randomUUID(),
+                        studentId,
+                        sectionId,
+                        courseId,
+                        enrolledAt: now
+                    });
+                    return;
+                }
+
+                if (existingEnrollment && existingEnrollment.sectionId === sectionId) {
+                    if (!StorageService.getStudentActiveStatus(studentId)) {
+                        StorageService.addStudentStatusHistory({
+                            id: crypto.randomUUID(),
+                            studentId,
+                            isActive: true,
+                            changedAt: now
+                        });
+                    }
+                    if (!StorageService.getSectionStudentActiveStatus(studentId, sectionId)) {
+                        StorageService.addSectionStudentStatusHistory({
+                            id: crypto.randomUUID(),
+                            studentId,
+                            sectionId,
+                            isActive: true,
+                            changedAt: now
+                        });
+                    }
+                    return;
+                }
+
+                StorageService.enrollStudent({
+                    id: crypto.randomUUID(),
+                    studentId,
+                    sectionId,
+                    courseId,
+                    enrolledAt: now
+                });
+            });
+
+            syncGlobalStatusFromSections(studentId);
+            loadData();
+            handleCloseEnrollPrompt();
+        } catch (err: any) {
+            setEnrollPromptError(err?.message || 'Unable to enroll student in selected sections.');
+        }
     };
 
     const calculateAge = (birthDate?: string) => {
@@ -352,9 +534,24 @@ export const StudentsModule = ({ sectionId, courseId, hideHeader = false }: Stud
     }, [attendanceData, enrollments]);
 
     const studentInsights = useMemo(() => {
-        const enrolledIds = students.filter(s => StorageService.getStudentActiveStatus(s.id)).map(s => s.id);
-        const withdrawnCount = Math.max(students.length - enrolledIds.length, 0);
-        const avgCourses = students.length > 0 ? (enrollments.length / students.length) : 0;
+        let enrolledCount = 0;
+        let withdrawnCount = 0;
+        let notEnrolledCount = 0;
+        const enrolledIds: string[] = [];
+
+        students.forEach(student => {
+            const status = StorageService.getStudentEnrollmentStatus(student.id);
+            if (status === 'enrolled') {
+                enrolledCount++;
+                enrolledIds.push(student.id);
+            } else if (status === 'withdrawn') {
+                withdrawnCount++;
+            } else {
+                notEnrolledCount++;
+            }
+        });
+
+        const avgCourses = students.length > 0 ? Math.floor(enrollments.length / students.length) : 0;
         const attendanceSamples = enrolledIds.map(id => getStudentOverallAttendance(id).percent).filter(p => p > 0);
         const avgAttendance = attendanceSamples.length > 0
             ? Math.round(attendanceSamples.reduce((a, b) => a + b, 0) / attendanceSamples.length)
@@ -362,12 +559,50 @@ export const StudentsModule = ({ sectionId, courseId, hideHeader = false }: Stud
 
         return {
             totalStudents: students.length,
-            enrolledCount: enrolledIds.length,
+            enrolledCount,
             withdrawnCount,
-            avgCourses: Number(avgCourses.toFixed(1)),
+            notEnrolledCount,
+            avgCourses,
             avgAttendance
         };
     }, [students, enrollments, getStudentOverallAttendance]);
+
+    const activeSectionIds = useMemo(() => new Set(sections.map(section => section.id)), [sections]);
+
+    const activeSectionsByCourse = useMemo(() => {
+        const byCourse = new Map<string, Section[]>();
+        sections.forEach(section => {
+            if (!byCourse.has(section.courseId)) {
+                byCourse.set(section.courseId, []);
+            }
+            byCourse.get(section.courseId)?.push(section);
+        });
+
+        return courses
+            .filter(course => byCourse.has(course.id))
+            .map(course => ({
+                course,
+                sections: (byCourse.get(course.id) || []).slice().sort((a, b) => a.name.localeCompare(b.name))
+            }));
+    }, [sections, courses]);
+
+    const enrollSelectionCount = Object.keys(enrollSelectionByCourse).length;
+
+    const selectedEnrollCourseTags = useMemo(() => {
+        return activeSectionsByCourse
+            .map(({ course, sections }) => {
+                const sectionId = enrollSelectionByCourse[course.id];
+                if (!sectionId) return null;
+                const selectedSection = sections.find(section => section.id === sectionId);
+                if (!selectedSection) return null;
+                return {
+                    key: course.id,
+                    courseName: course.name,
+                    sectionName: selectedSection.name
+                };
+            })
+            .filter((tag): tag is { key: string; courseName: string; sectionName: string } => Boolean(tag));
+    }, [activeSectionsByCourse, enrollSelectionByCourse]);
 
     const getStudentMetrics = (studentId: string) => {
         const studentEnrollments = enrollments.filter(e => e.studentId === studentId);
@@ -376,15 +611,7 @@ export const StudentsModule = ({ sectionId, courseId, hideHeader = false }: Stud
         const now = new Date();
         const today = now.toISOString().split('T')[0];
 
-        const activeSections = studentSections.filter(s => {
-            if (!s.endDate) return true;
-            return s.endDate >= today;
-        });
-
-        const finishedSections = studentSections.filter(s => {
-            if (!s.endDate) return false;
-            return s.endDate < today;
-        });
+        const activeSections = studentSections.filter(s => !s.endDate || s.endDate >= today);
 
         const calcAttendance = (sectionId: string) => {
             if (!StorageService.getEffectiveStudentStatus(studentId, sectionId)) {
@@ -409,7 +636,7 @@ export const StudentsModule = ({ sectionId, courseId, hideHeader = false }: Stud
             };
         };
 
-        return { activeSections, finishedSections, calcAttendance };
+        return { activeSections, calcAttendance };
     };
 
     const toggleStudentExpand = (studentId: string) => {
@@ -420,10 +647,8 @@ export const StudentsModule = ({ sectionId, courseId, hideHeader = false }: Stud
     const visibleStudents = useMemo(() => {
         let out = [...students];
 
-        if (filterActive === 'active') {
-            out = out.filter(s => StorageService.getStudentActiveStatus(s.id));
-        } else if (filterActive === 'inactive') {
-            out = out.filter(s => !StorageService.getStudentActiveStatus(s.id));
+        if (filterActive !== 'all') {
+            out = out.filter(s => StorageService.getStudentEnrollmentStatus(s.id) === filterActive);
         }
 
         if (sortBy) {
@@ -549,7 +774,7 @@ export const StudentsModule = ({ sectionId, courseId, hideHeader = false }: Stud
         };
 
         const handleMouseDown = (event: MouseEvent) => {
-            if (event.button !== 0 || isModalOpen || isInteractiveElement(event.target)) return;
+            if (event.button !== 0 || isModalOpen || isEnrollPromptOpen || isInteractiveElement(event.target)) return;
 
             dragSelectionRef.current = {
                 startX: event.clientX,
@@ -602,7 +827,7 @@ export const StudentsModule = ({ sectionId, courseId, hideHeader = false }: Stud
             window.removeEventListener('mousedown', handleMouseDown, true);
             finishDragSelection(!!dragSelectionRef.current?.hasDragged);
         };
-    }, [isModalOpen]);
+    }, [isModalOpen, isEnrollPromptOpen]);
 
     const changeSort = (by: typeof sortBy) => {
         if (sortBy === by) {
@@ -629,9 +854,12 @@ export const StudentsModule = ({ sectionId, courseId, hideHeader = false }: Stud
     const bulkChangeStatus = async (active: boolean) => {
         if (selectedCount === 0) return;
         const confirmed = await showConfirmation({
-            title: active ? 'Mark Selected Enrolled?' : 'Mark Selected Withdrawn?',
-            message: `Are you sure you want to ${active ? 'enroll' : 'withdraw'} ${selectedCount} selected students?`,
-            confirmLabel: active ? 'Enroll' : 'Withdraw',
+            title: active ? 'Enroll Selected Students?' : 'Withdraw Selected Students?',
+            message: active
+                ? `Enroll ${selectedCount} selected students?`
+                : `Withdraw ${selectedCount} selected students from all active courses?`,
+            confirmLabel: active ? 'Enroll selected' : 'Withdraw selected',
+            confirmVariant: active ? 'success' : 'danger',
             cancelLabel: 'Cancel'
         });
         if (!confirmed) return;
@@ -649,6 +877,25 @@ export const StudentsModule = ({ sectionId, courseId, hideHeader = false }: Stud
         if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
         return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
     };
+
+    const getStudentShare = (count: number) => {
+        const total = studentInsights.totalStudents;
+        const percentage = total > 0 ? Math.round((count / total) * 100) : 0;
+        return { count, percentage };
+    };
+
+    const enrolledShare = getStudentShare(studentInsights.enrolledCount);
+    const notEnrolledShare = getStudentShare(studentInsights.notEnrolledCount);
+    const withdrawnShare = getStudentShare(studentInsights.withdrawnCount);
+    const avgAttendanceLevel = getAttendanceStatus(studentInsights.avgAttendance);
+    const avgAttendanceBadgeClass = avgAttendanceLevel === 'high'
+        ? styles.insightPercentEnrolled
+        : avgAttendanceLevel === 'mid'
+            ? styles.insightPercentWarning
+            : styles.insightPercentDanger;
+    const getInsightFillStyle = (percentage: number): CSSProperties => ({
+        '--insight-fill': `${Math.max(0, Math.min(100, percentage))}%`
+    } as CSSProperties);
 
     return (
         <div>
@@ -673,49 +920,93 @@ export const StudentsModule = ({ sectionId, courseId, hideHeader = false }: Stud
             )}
 
             <div className={styles.insightsGrid}>
-                <div className={styles.insightCard}>
-                    <div className={styles.insightIcon} data-tone="primary">
-                        <Users size={18} />
-                    </div>
-                    <div>
-                        <div className={styles.insightLabel}>Total Students</div>
+                <div className={styles.insightCard} data-tone="primary" style={getInsightFillStyle(0)}>
+                    <div className={styles.insightBody}>
+                        <div className={styles.insightLabelRow}>
+                            <div className={styles.insightIcon} data-tone="primary">
+                                <Users size={18} />
+                            </div>
+                            <div className={styles.insightLabel}>Total Students</div>
+                        </div>
                         <div className={styles.insightValue}>{studentInsights.totalStudents}</div>
                     </div>
                 </div>
-                <div className={styles.insightCard}>
-                    <div className={styles.insightIcon} data-tone="success">
-                        <UserCheck size={18} />
-                    </div>
-                    <div>
-                        <div className={styles.insightLabel}>Enrolled</div>
-                        <div className={styles.insightValue}>{studentInsights.enrolledCount}</div>
-                    </div>
-                </div>
-                <div className={styles.insightCard}>
-                    <div className={styles.insightIcon} data-tone="warning">
-                        <UserX size={18} />
-                    </div>
-                    <div>
-                        <div className={styles.insightLabel}>Withdrawn</div>
-                        <div className={styles.insightValue}>{studentInsights.withdrawnCount}</div>
+                <div className={styles.insightCard} data-tone="success" style={getInsightFillStyle(enrolledShare.percentage)}>
+                    <div className={styles.insightBody}>
+                        <div className={styles.insightLabelRow}>
+                            <div className={styles.insightIcon} data-tone="success">
+                                <UserCheck size={18} />
+                            </div>
+                            <div className={styles.insightLabel}>Enrolled</div>
+                        </div>
+                        <div className={styles.insightValueSplit}>
+                            <span className={styles.insightValueCount}>{enrolledShare.count}</span>
+                            <span className={`${styles.insightPercentBadge} ${styles.insightPercentEnrolled}`}>
+                                <span className={styles.insightPercentBadgeText}>{enrolledShare.percentage}%</span>
+                            </span>
+                        </div>
                     </div>
                 </div>
-                <div className={styles.insightCard}>
-                    <div className={styles.insightIcon} data-tone="info">
-                        <BarChart3 size={18} />
-                    </div>
-                    <div>
-                        <div className={styles.insightLabel}>Avg Attendance</div>
-                        <div className={styles.insightValue}>{studentInsights.avgAttendance}%</div>
+                <div className={styles.insightCard} data-tone="info" style={getInsightFillStyle(notEnrolledShare.percentage)}>
+                    <div className={styles.insightBody}>
+                        <div className={styles.insightLabelRow}>
+                            <div className={styles.insightIcon} data-tone="info">
+                                <UserX size={18} />
+                            </div>
+                            <div className={styles.insightLabel}>Not enrolled</div>
+                        </div>
+                        <div className={styles.insightValueSplit}>
+                            <span className={styles.insightValueCount}>{notEnrolledShare.count}</span>
+                            <span className={`${styles.insightPercentBadge} ${styles.insightPercentInfo}`}>
+                                <span className={styles.insightPercentBadgeText}>{notEnrolledShare.percentage}%</span>
+                            </span>
+                        </div>
                     </div>
                 </div>
-                <div className={styles.insightCard}>
-                    <div className={styles.insightIcon} data-tone="accent">
-                        <BookOpen size={18} />
+                <div className={styles.insightCard} data-tone="warning" style={getInsightFillStyle(withdrawnShare.percentage)}>
+                    <div className={styles.insightBody}>
+                        <div className={styles.insightLabelRow}>
+                            <div className={styles.insightIcon} data-tone="warning">
+                                <AlertTriangle size={18} />
+                            </div>
+                            <div className={styles.insightLabel}>Withdrawn</div>
+                        </div>
+                        <div className={styles.insightValueSplit}>
+                            <span className={styles.insightValueCount}>{withdrawnShare.count}</span>
+                            <span className={`${styles.insightPercentBadge} ${styles.insightPercentWarning}`}>
+                                <span className={styles.insightPercentBadgeText}>{withdrawnShare.percentage}%</span>
+                            </span>
+                        </div>
                     </div>
-                    <div>
-                        <div className={styles.insightLabel}>Courses / Student</div>
-                        <div className={styles.insightValue}>{studentInsights.avgCourses}</div>
+                </div>
+                <div className={styles.insightCard} data-tone="info" style={getInsightFillStyle(studentInsights.avgAttendance)}>
+                    <div className={styles.insightBody}>
+                        <div className={styles.insightLabelRow}>
+                            <div className={styles.insightIcon} data-tone="info">
+                                <BarChart3 size={18} />
+                            </div>
+                            <div className={styles.insightLabel}>Avg Attendance</div>
+                        </div>
+                        <div className={styles.insightValueSplit}>
+                            <span className={`${styles.insightPercentBadge} ${avgAttendanceBadgeClass}`}>
+                                <span className={styles.insightPercentBadgeText}>{studentInsights.avgAttendance}%</span>
+                            </span>
+                        </div>
+                    </div>
+                </div>
+                <div className={styles.insightCard} data-tone="accent" style={getInsightFillStyle(0)}>
+                    <div className={styles.insightBody}>
+                        <div className={styles.insightLabelRow}>
+                            <div className={styles.insightIcon} data-tone="accent">
+                                <BookOpen size={18} />
+                            </div>
+                            <div className={styles.insightLabel}>Courses / Student</div>
+                        </div>
+                        <div className={styles.insightValueSplit}>
+                            <span className={`${styles.insightPercentBadge} ${styles.insightPercentAccent}`}>
+                                <span className={styles.insightPercentBadgeText}>{studentInsights.avgCourses}</span>
+                            </span>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -724,14 +1015,15 @@ export const StudentsModule = ({ sectionId, courseId, hideHeader = false }: Stud
                 <div className={styles.chipGroup} role="group" aria-label="Filter by enrollment status">
                     {[
                         { key: 'all', label: 'All' },
-                        { key: 'active', label: 'Enrolled' },
-                        { key: 'inactive', label: 'Withdrawn' }
+                        { key: 'enrolled', label: 'Enrolled' },
+                        { key: 'not_enrolled', label: 'Not enrolled' },
+                        { key: 'withdrawn', label: 'Withdrawn' }
                     ].map(opt => (
                         <button
                             key={opt.key}
                             type="button"
                             className={`${styles.filterChip} ${filterActive === opt.key ? styles.filterChipActive : ''}`}
-                            onClick={() => setFilterActive(opt.key as any)}
+                            onClick={() => setFilterActive(opt.key as 'all' | StudentEnrollmentStatus)}
                         >
                             {opt.label}
                         </button>
@@ -869,6 +1161,8 @@ export const StudentsModule = ({ sectionId, courseId, hideHeader = false }: Stud
                     pageStudents.map(student => {
                         const isExpanded = expandedStudentId === student.id;
                         const globalActive = StorageService.getStudentActiveStatus(student.id);
+                        const studentStatus = StorageService.getStudentEnrollmentStatus(student.id);
+                        const statusLabel = studentStatus === 'withdrawn' ? 'Withdrawn' : 'Not enrolled';
 
                         return (
                             <React.Fragment key={student.id}>
@@ -887,7 +1181,7 @@ export const StudentsModule = ({ sectionId, courseId, hideHeader = false }: Stud
                                     onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggleStudentExpand(student.id); } }}
                                 >
                                     <div className={styles.expandCell} onClick={e => { e.stopPropagation(); handleRowExpand(student.id); }}>
-                                        {isExpanded ? <ChevronDown size={20} color="#64748b" /> : <ChevronRight size={20} color="#94a3b8" />}
+                                        {isExpanded ? <ChevronDown size={20} color="var(--text-secondary)" /> : <ChevronRight size={20} color="var(--table-head-color)" />}
                                     </div>
 
                                     <div className={styles.nameCell}>
@@ -903,14 +1197,26 @@ export const StudentsModule = ({ sectionId, courseId, hideHeader = false }: Stud
                                     <div className={styles.centerCell}>{student.email}</div>
                                     <div className={styles.smallCell}>{calculateAge(student.birthDate)}</div>
                                     <div className={styles.smallCell}>{student.sex || '-'}</div>
-                                    <div className={styles.smallCell}>{enrollments.filter(e => e.studentId === student.id).length}</div>
+                                    <div className={styles.smallCell}>
+                                        {enrollments.filter(e => e.studentId === student.id && activeSectionIds.has(e.sectionId)).length}
+                                    </div>
                                     <div className={styles.attendanceCell}>
-                                        {!globalActive ? (
-                                            <span className={styles.unenrolledFlag} title="Not enrolled" aria-label="Not enrolled">
-                                                <AlertTriangle size={14} />
-                                                Not enrolled
-                                            </span>
-                                        ) : (() => {
+                                        {studentStatus !== 'enrolled' ? (() => {
+                                            const statusClass = studentStatus === 'withdrawn'
+                                                ? styles.unenrolledFlagWithdrawn
+                                                : styles.unenrolledFlagNotEnrolled;
+                                            const StatusIcon = studentStatus === 'withdrawn' ? AlertTriangle : UserX;
+                                            return (
+                                                <span
+                                                    className={`${styles.unenrolledFlag} ${statusClass}`}
+                                                    title={statusLabel}
+                                                    aria-label={statusLabel}
+                                                >
+                                                    <StatusIcon size={14} />
+                                                    {statusLabel}
+                                                </span>
+                                            );
+                                        })() : (() => {
                                             const overall = getStudentOverallAttendance(student.id);
                                             if (overall.total === 0) return <span className={styles.attendanceEmpty}>—</span>;
                                             const level = getAttendanceStatus(overall.percent);
@@ -929,8 +1235,14 @@ export const StudentsModule = ({ sectionId, courseId, hideHeader = false }: Stud
                                         })()}
                                     </div>
                                     <div className={styles.actionGroup}>
-                                        {!globalActive && (
-                                            <Button size="sm" variant="success" className={styles.statusToggleButton} onClick={(e) => { e.stopPropagation(); handleToggleGlobalStatus(student); }} aria-label="Mark student enrolled">
+                                        {studentStatus !== 'enrolled' && (
+                                            <Button
+                                                size="sm"
+                                                variant="success"
+                                                className={styles.statusToggleButton}
+                                                onClick={(e) => { e.stopPropagation(); handleOpenEnrollPrompt(student); }}
+                                                aria-label="Enroll student"
+                                            >
                                                 Enroll
                                             </Button>
                                         )}
@@ -953,7 +1265,7 @@ export const StudentsModule = ({ sectionId, courseId, hideHeader = false }: Stud
                                                     <ClipboardList size={18} /> Course History
                                                 </h3>
                                                 {(() => {
-                                                    const { activeSections, finishedSections, calcAttendance } = getStudentMetrics(student.id);
+                                                    const { activeSections, calcAttendance } = getStudentMetrics(student.id);
 
                                                     const SectionRow = ({ section, status }: { section: Section, status: string }) => {
                                                         const globalActive = StorageService.getStudentActiveStatus(student.id);
@@ -1003,8 +1315,7 @@ export const StudentsModule = ({ sectionId, courseId, hideHeader = false }: Stud
                                                     return (
                                                         <>
                                                             {activeSections.length > 0 && activeSections.map(s => <SectionRow key={s.id} section={s} status="Enrolled" />)}
-                                                            {finishedSections.length > 0 && finishedSections.map(s => <SectionRow key={s.id} section={s} status="Completed" />)}
-                                                            {activeSections.length === 0 && finishedSections.length === 0 && (
+                                                            {activeSections.length === 0 && (
                                                                 <div className={styles.emptyCourses}>No courses enrolled</div>
                                                             )}
                                                         </>
@@ -1042,6 +1353,92 @@ export const StudentsModule = ({ sectionId, courseId, hideHeader = false }: Stud
                     aria-hidden
                 />
             )}
+
+            <Modal
+                isOpen={isEnrollPromptOpen}
+                onClose={handleCloseEnrollPrompt}
+                title={enrollTargetStudent ? `Enroll ${enrollTargetStudent.name}` : 'Enroll Student'}
+                panelClassName={styles.enrollPromptPanel}
+            >
+                <div className={styles.enrollPromptBody}>
+                    <div className={styles.enrollSelectionSticky}>
+                        <span className={styles.enrollSelectionLabel}>Selected</span>
+                        {selectedEnrollCourseTags.length === 0 ? (
+                            <span className={styles.enrollSelectionEmpty}>No courses selected</span>
+                        ) : (
+                            <div className={styles.enrollSelectionTags}>
+                                {selectedEnrollCourseTags.map(tag => (
+                                    <span key={tag.key} className={styles.enrollSelectionTag}>
+                                        {tag.courseName} · {tag.sectionName}
+                                    </span>
+                                ))}
+                            </div>
+                        )}
+                    </div>
+                    <p className={styles.enrollPromptHint}>
+                        Select the sections to enroll. One section per course.
+                    </p>
+                    {enrollPromptError && (
+                        <div className={styles.enrollPromptError}>{enrollPromptError}</div>
+                    )}
+                    {activeSectionsByCourse.length === 0 ? (
+                        <div className={styles.enrollPromptEmpty}>
+                            No active sections available to enroll.
+                        </div>
+                    ) : (
+                        <div className={styles.enrollCourseList}>
+                            {activeSectionsByCourse.map(({ course, sections }) => (
+                                <div key={course.id} className={styles.enrollCourseGroup}>
+                                    <div className={styles.enrollCourseHeader}>
+                                        <span className={styles.enrollCourseName}>{course.name}</span>
+                                        <span className={styles.enrollCourseMeta}>
+                                            {sections.length} {sections.length === 1 ? 'section' : 'sections'}
+                                        </span>
+                                    </div>
+                                    <div className={styles.enrollSectionOptions}>
+                                        {sections.map(section => {
+                                            const isSelected = enrollSelectionByCourse[course.id] === section.id;
+                                            return (
+                                                <button
+                                                    key={section.id}
+                                                    type="button"
+                                                    className={`${styles.enrollSectionOption} ${isSelected ? styles.enrollSectionOptionActive : ''}`}
+                                                    onClick={() => toggleEnrollSelection(course.id, section.id)}
+                                                    aria-pressed={isSelected}
+                                                >
+                                                    <div className={styles.enrollSectionName}>{section.name}</div>
+                                                    <div className={styles.enrollSectionMeta}>
+                                                        {(section.days && section.days.length > 0) ? section.days.join(', ') : 'Days TBD'}
+                                                        {section.startTime && section.endTime
+                                                            ? ` · ${section.startTime}-${section.endTime}`
+                                                            : ''}
+                                                    </div>
+                                                </button>
+                                            );
+                                        })}
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    )}
+                    {activeSectionsByCourse.length > 0 && (
+                        <div className={styles.enrollPromptSummary}>
+                            {enrollSelectionCount} {enrollSelectionCount === 1 ? 'section' : 'sections'} selected
+                        </div>
+                    )}
+                </div>
+                <div className={styles.enrollPromptActions}>
+                    <Button type="button" variant="secondary" onClick={handleCloseEnrollPrompt}>Cancel</Button>
+                    <Button
+                        type="button"
+                        variant="success"
+                        onClick={handleEnrollSubmit}
+                        disabled={activeSectionsByCourse.length === 0}
+                    >
+                        Enroll
+                    </Button>
+                </div>
+            </Modal>
 
             {/* Add/Edit Modal */}
             <Modal

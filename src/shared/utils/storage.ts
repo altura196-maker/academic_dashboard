@@ -1,4 +1,4 @@
-import { Course, Section, Student, Professor, Enrollment, Attendance, Payment, StudentStatusHistory, SectionStudentStatusHistory } from './types';
+import { Course, Section, Student, Professor, Enrollment, Attendance, Payment, StudentStatusHistory, SectionStudentStatusHistory, StudentEnrollmentStatus } from './types';
 
 const STORAGE_KEYS = {
     COURSES: 'academy_courses',
@@ -75,6 +75,15 @@ export const StorageService = {
 
     // Sections
     getSections: () => StorageService.getData<Section>(STORAGE_KEYS.SECTIONS),
+    isSectionFinished: (section: Section, referenceDate?: string) => {
+        if (!section.endDate) return false;
+        const today = referenceDate ?? new Date().toISOString().split('T')[0];
+        return section.endDate < today;
+    },
+    getActiveSections: (referenceDate?: string) => {
+        const sections = StorageService.getSections();
+        return sections.filter(section => !StorageService.isSectionFinished(section, referenceDate));
+    },
     addSection: (section: Section, options?: { skipConflictCheck?: boolean }) => {
         const sections = StorageService.getSections();
         const toMinutes = (time: string) => {
@@ -252,6 +261,16 @@ export const StorageService = {
         }
         enrollments.push(enrollment);
         StorageService.saveData(STORAGE_KEYS.ENROLLMENTS, enrollments);
+
+        // Business rule: enrolling in any section reactivates global student status.
+        if (!StorageService.getStudentActiveStatus(enrollment.studentId)) {
+            StorageService.addStudentStatusHistory({
+                id: crypto.randomUUID(),
+                studentId: enrollment.studentId,
+                isActive: true,
+                changedAt: new Date().toISOString(),
+            });
+        }
     },
     unenrollStudent: (sectionId: string, studentId: string) => {
         let enrollments = StorageService.getEnrollments();
@@ -293,6 +312,38 @@ export const StorageService = {
             .sort((a, b) => new Date(b.changedAt).getTime() - new Date(a.changedAt).getTime());
         if (history.length === 0) return true;
         return history[0].isActive;
+    },
+    getStudentEnrollmentStatus: (studentId: string, referenceDate?: string): StudentEnrollmentStatus => {
+        const today = referenceDate ?? new Date().toISOString().split('T')[0];
+        const globalActive = StorageService.getStudentActiveStatus(studentId);
+        if (!globalActive) return 'withdrawn';
+
+        const enrollments = StorageService.getEnrollments().filter(e => e.studentId === studentId);
+        if (enrollments.length === 0) return 'not_enrolled';
+
+        const sectionsById = new Map(StorageService.getSections().map(section => [section.id, section]));
+        let hasOngoingActiveEnrollment = false;
+        let hasFinishedEnrollment = false;
+        let hasAnyActiveSectionStatus = false;
+
+        for (const enrollment of enrollments) {
+            const section = sectionsById.get(enrollment.sectionId);
+            const sectionActive = StorageService.getSectionStudentActiveStatus(studentId, enrollment.sectionId);
+            if (sectionActive) hasAnyActiveSectionStatus = true;
+
+            const sectionIsFinished = section?.endDate ? section.endDate < today : false;
+            if (sectionIsFinished) hasFinishedEnrollment = true;
+
+            if (!sectionIsFinished && sectionActive) {
+                hasOngoingActiveEnrollment = true;
+                break;
+            }
+        }
+
+        if (hasOngoingActiveEnrollment) return 'enrolled';
+        if (!hasAnyActiveSectionStatus) return 'withdrawn';
+        if (hasFinishedEnrollment) return 'not_enrolled';
+        return 'not_enrolled';
     },
     getEffectiveStudentStatus: (studentId: string, sectionId: string) => {
         return StorageService.getStudentActiveStatus(studentId) && StorageService.getSectionStudentActiveStatus(studentId, sectionId);

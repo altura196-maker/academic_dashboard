@@ -355,14 +355,14 @@
 }
 
 .summaryBlockPresent {
-    background-color: #ecfdf5;
-    color: #065f46;
+    background-color: var(--status-success-bg);
+    color: var(--status-success);
     border-right: 1px solid var(--border-color);
 }
 
 .summaryBlockAbsent {
-    background-color: #fef2f2;
-    color: #991b1b;
+    background-color: var(--status-danger-bg);
+    color: var(--status-danger);
 }
 
 .summaryValue {
@@ -395,7 +395,7 @@
     gap: 0.75rem;
     max-height: 600px;
     overflow-y: auto;
-    background-color: #fafafa;
+    background-color: var(--bg-primary);
 }
 
 .studentChip {
@@ -418,11 +418,32 @@
     box-shadow: var(--shadow-md);
 }
 
+.studentChipDisabled {
+    cursor: not-allowed;
+    opacity: 0.62;
+    background-color: var(--bg-subtle);
+    border-color: var(--border-color);
+    color: var(--text-secondary);
+    box-shadow: none;
+    transform: none;
+}
+
+.studentChipDisabled:hover {
+    transform: none;
+    box-shadow: none;
+}
+
+.studentChipDisabled .studentChipAvatar {
+    background-color: var(--bg-card);
+    color: var(--text-secondary);
+}
+
 .studentChipSelected {
-    background-color: #1e3a8a;
-    border-color: #312e81;
-    box-shadow: 0 0 0 3px rgba(30, 58, 138, 0.2), var(--shadow-sm);
+    background-color: var(--selection-bg);
+    border-color: var(--selection-border);
+    box-shadow: 0 0 0 3px var(--focus-ring-shadow), var(--shadow-sm);
     transform: scale(1.02);
+    color: var(--selection-text);
 }
 
 .studentChipPresent {
@@ -471,9 +492,9 @@
 .historyHeader {
     padding: 1.25rem;
     border-bottom: 1px solid var(--border-color);
-    background-color: #f8fafc;
+    background-color: var(--bg-subtle);
     font-weight: 600;
-    color: #64748b;
+    color: var(--table-head-color);
     font-size: 0.9rem;
     text-transform: uppercase;
     letter-spacing: 0.05em;
@@ -501,7 +522,7 @@
 }
 
 .historyItem:hover {
-    background-color: #f8fafc;
+    background-color: var(--bg-hover);
 }
 
 .historyItemContent {
@@ -567,7 +588,7 @@
 .timelineDateBadge {
     padding: 0.4rem 0.8rem;
     background-color: var(--primary);
-    color: white;
+    color: var(--button-primary-text);
     border-radius: 0.5rem;
     font-weight: 700;
     font-size: 0.85rem;
@@ -639,15 +660,15 @@
 }
 
 .timelineMetrichigh {
-    color: #10b981;
+    color: var(--status-success);
 }
 
 .timelineMetricmid {
-    color: #f59e0b;
+    color: var(--status-warning);
 }
 
 .timelineMetriclow {
-    color: #ef4444;
+    color: var(--status-danger);
 }
 
 .timelineMetricLabel {
@@ -690,13 +711,13 @@
 .timelineDetails {
     padding: 1.25rem;
     border-top: 1px solid var(--border-color);
-    background-color: rgba(0, 0, 0, 0.02);
+    background-color: var(--bg-primary);
 }
 
 .timelineDetailsTitle {
     font-size: 0.75rem;
     font-weight: 700;
-    color: #64748b;
+    color: var(--table-head-color);
     text-transform: uppercase;
     margin-bottom: 0.75rem;
 }
@@ -838,14 +859,14 @@
 .drilldownBadgeActive {
     padding: 0.4rem 0.8rem;
     background-color: var(--primary);
-    color: white;
+    color: var(--button-primary-text);
     border-radius: 2rem;
     font-size: 0.8rem;
     font-weight: 700;
 }
 
 .drilldownSectionList {
-    background-color: rgba(0, 0, 0, 0.01);
+    background-color: var(--bg-primary);
     border-top: 1px solid var(--border-color);
     padding: 0.5rem 0;
 }
@@ -861,7 +882,7 @@
 }
 
 .drilldownSectionRowActive {
-    background-color: white;
+    background-color: var(--bg-card);
     border-bottom: 1px solid var(--border-color);
 }
 
@@ -872,7 +893,7 @@
 }
 
 .drilldownSectionChevron {
-    color: #94a3b8;
+    color: var(--table-head-color);
     transition: all 0.2s;
 }
 
@@ -909,14 +930,14 @@
 
 .drilldownSectionCountLabel {
     font-size: 0.65rem;
-    color: #64748b;
+    color: var(--table-head-color);
     font-weight: 700;
     text-transform: uppercase;
 }
 
 .drilldownAttendees {
     padding: 1.5rem 1.5rem 1.5rem 5.5rem;
-    background-color: white;
+    background-color: var(--bg-card);
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
     gap: 0.75rem;
@@ -924,7 +945,7 @@
 
 .drilldownAttendeesEmpty {
     grid-column: 1 / -1;
-    color: #64748b;
+    color: var(--text-secondary);
     font-size: 0.9rem;
     font-style: italic;
 }
@@ -966,7 +987,7 @@
 
 .drilldownAttendeeStatus {
     font-size: 0.65rem;
-    color: #22c55e;
+    color: var(--status-success);
     font-weight: 800;
 }
 
@@ -985,7 +1006,7 @@
     left: 1.1rem;
     top: 50%;
     transform: translateY(-50%);
-    color: #94a3b8;
+    color: var(--table-head-color);
 }
 
 .searchInput {
@@ -1026,7 +1047,7 @@
 
 .mainTabButtonActive {
     background-color: var(--primary);
-    color: white;
+    color: var(--button-primary-text);
 }
 
 .hierarchyContent {
@@ -1040,8 +1061,8 @@
 
 .dragSelectionBox {
     position: fixed;
-    border: 1px solid #0ea5e9;
-    background-color: rgba(14, 165, 233, 0.16);
+    border: 1px solid var(--selection-border);
+    background-color: var(--selection-bg);
     border-radius: 0.25rem;
     pointer-events: none;
     z-index: 1000;

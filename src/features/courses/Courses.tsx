@@ -100,8 +100,9 @@ export const Courses = () => {
     // Removed custom mouse-back handling.
 
     const loadData = () => {
+        const activeSections = StorageService.getActiveSections();
         setCourses(StorageService.getCourses());
-        setSections(StorageService.getSections());
+        setSections(activeSections);
         setEnrollments(StorageService.getEnrollments());
         setAttendance(StorageService.getAttendance());
     };
