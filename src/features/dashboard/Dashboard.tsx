@@ -1,11 +1,15 @@
 import { type CSSProperties } from 'react';
 import { AlertTriangle, BookOpen, TrendingUp, UserCheck, UserMinus, Users } from 'lucide-react';
 import { DashboardHeaderControls } from './components/DashboardHeaderControls';
+import { DashboardMatrixView } from './Dashboard2';
+import { DashboardSplitView } from './Dashboard3';
 import { useDashboardActions } from './useDashboardActions';
 import { useDashboardData } from './useDashboardData';
+import { useDashboardView } from './useDashboardView';
 import { useDashboardVisualMode } from './useDashboardVisualMode';
 import modes from './dashboardModes.module.css';
 import styles from './Dashboard.module.css';
+import type { DashboardViewMode } from './types';
 
 const clampPercent = (value: number) => Math.max(0, Math.min(100, value));
 
@@ -24,36 +28,20 @@ const getCourseToneClass = (percentage: number) => {
     return modes.toneDanger;
 };
 
-export const Dashboard = () => {
+const renderExecutiveGrid = (
+    data: ReturnType<typeof useDashboardData>
+) => {
     const {
         stats,
         courseAttendance,
         enrolledShare,
         notEnrolledShare,
         withdrawnShare,
-        loadData,
         getCoursePercentStyle
-    } = useDashboardData();
-    const { mode, setMode } = useDashboardVisualMode();
-    const { handleClearData, handleLoadDemoData } = useDashboardActions(loadData);
+    } = data;
 
     return (
-        <div className={modes.dashboardModule} data-visual-mode={mode}>
-            <div className={modes.dashboardHeaderShell}>
-                <div className={modes.dashboardHeader}>
-                    <div>
-                        <h1 className={modes.dashboardTitle}>Dashboard</h1>
-                        <p className={modes.dashboardSubtitle}>Executive grid for academy operations and attendance performance.</p>
-                    </div>
-                    <DashboardHeaderControls
-                        mode={mode}
-                        onModeChange={setMode}
-                        onLoadDemoData={handleLoadDemoData}
-                        onClearData={handleClearData}
-                    />
-                </div>
-            </div>
-
+        <>
             <div className={styles.topGrid}>
                 <section className={`${modes.dashboardCard} ${modes.tonePrimary} ${styles.panelCard}`} style={getFillStyle(0)}>
                     <div className={`${modes.cardBody} ${styles.panelBody}`}>
@@ -189,6 +177,70 @@ export const Dashboard = () => {
                     </div>
                 )}
             </section>
+        </>
+    );
+};
+
+const getViewTitle = (view: DashboardViewMode) => {
+    if (view === 'matrix') return 'Card Matrix';
+    if (view === 'split') return 'Split Panels';
+    return 'Executive Grid';
+};
+
+export const Dashboard = () => {
+    const data = useDashboardData();
+    const { mode, setMode } = useDashboardVisualMode();
+    const { view, setView } = useDashboardView();
+    const { handleClearData, handleLoadDemoData } = useDashboardActions(data.loadData);
+
+    const viewTitle = getViewTitle(view);
+
+    return (
+        <div className={modes.dashboardModule} data-visual-mode={mode}>
+            <div className={modes.dashboardHeaderShell}>
+                <div className={modes.dashboardHeader}>
+                    <div>
+                        <h1 className={modes.dashboardTitle}>Dashboard</h1>
+                        <p className={modes.dashboardSubtitle}>View: {viewTitle}</p>
+                    </div>
+                    <DashboardHeaderControls
+                        mode={mode}
+                        onModeChange={setMode}
+                        view={view}
+                        onViewChange={setView}
+                        onLoadDemoData={handleLoadDemoData}
+                        onClearData={handleClearData}
+                    />
+                </div>
+            </div>
+
+            {view === 'executive' && renderExecutiveGrid(data)}
+            {view === 'matrix' && (
+                <DashboardMatrixView
+                    stats={data.stats}
+                    courseAttendance={data.courseAttendance}
+                    overallAttendance={data.overallAttendance}
+                    enrolledShare={data.enrolledShare}
+                    notEnrolledShare={data.notEnrolledShare}
+                    withdrawnShare={data.withdrawnShare}
+                    getCoursePercentStyle={data.getCoursePercentStyle}
+                    getFillStyle={getFillStyle}
+                    getProgressStyle={getProgressStyle}
+                />
+            )}
+            {view === 'split' && (
+                <DashboardSplitView
+                    stats={data.stats}
+                    courseAttendance={data.courseAttendance}
+                    overallAttendance={data.overallAttendance}
+                    enrolledShare={data.enrolledShare}
+                    notEnrolledShare={data.notEnrolledShare}
+                    withdrawnShare={data.withdrawnShare}
+                    getCoursePercentStyle={data.getCoursePercentStyle}
+                    getFillStyle={getFillStyle}
+                    getProgressStyle={getProgressStyle}
+                />
+            )}
         </div>
     );
 };

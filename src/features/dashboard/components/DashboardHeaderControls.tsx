@@ -2,11 +2,14 @@ import { useEffect, useRef, useState } from 'react';
 import { Database, MoreVertical, Trash } from 'lucide-react';
 import { Button } from '../../../shared/components/Button';
 import { DashboardVisualMode } from '../useDashboardVisualMode';
+import { DashboardViewMode } from '../types';
 import styles from './DashboardHeaderControls.module.css';
 
 interface DashboardHeaderControlsProps {
     mode: DashboardVisualMode;
     onModeChange: (mode: DashboardVisualMode) => void;
+    view: DashboardViewMode;
+    onViewChange: (view: DashboardViewMode) => void;
     onLoadDemoData: () => Promise<void> | void;
     onClearData: () => Promise<void> | void;
 }
@@ -17,9 +20,17 @@ const MODE_OPTIONS: Array<{ value: DashboardVisualMode; label: string }> = [
     { value: 'expressive', label: 'Expressive' }
 ];
 
+const VIEW_OPTIONS: Array<{ value: DashboardViewMode; label: string }> = [
+    { value: 'executive', label: 'Executive Grid' },
+    { value: 'matrix', label: 'Card Matrix' },
+    { value: 'split', label: 'Split Panels' }
+];
+
 export const DashboardHeaderControls = ({
     mode,
     onModeChange,
+    view,
+    onViewChange,
     onLoadDemoData,
     onClearData
 }: DashboardHeaderControlsProps) => {
@@ -57,6 +68,26 @@ export const DashboardHeaderControls = ({
 
     return (
         <div className={styles.controlsWrap}>
+            <div className={styles.visualModeWrap}>
+                <span className={styles.visualModeLabel}>Switch view</span>
+                <div className={styles.visualModeGroup} role="group" aria-label="Dashboard view mode">
+                    {VIEW_OPTIONS.map(option => (
+                        <button
+                            key={option.value}
+                            type="button"
+                            onClick={() => onViewChange(option.value)}
+                            className={[
+                                styles.visualModeButton,
+                                view === option.value ? styles.visualModeButtonActive : ''
+                            ].filter(Boolean).join(' ')}
+                            aria-pressed={view === option.value}
+                        >
+                            {option.label}
+                        </button>
+                    ))}
+                </div>
+            </div>
+
             <div className={styles.visualModeWrap}>
                 <span className={styles.visualModeLabel}>Visual mode</span>
                 <div className={styles.visualModeGroup} role="group" aria-label="Dashboard visual mode">

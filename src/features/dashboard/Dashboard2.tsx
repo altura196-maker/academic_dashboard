@@ -1,21 +1,7 @@
-import { type CSSProperties } from 'react';
-import { AlertTriangle, BookOpen, Calendar, LayoutGrid, TrendingUp, UserCheck, UserMinus, Users } from 'lucide-react';
-import { DashboardHeaderControls } from './components/DashboardHeaderControls';
-import { useDashboardActions } from './useDashboardActions';
-import { useDashboardData } from './useDashboardData';
-import { useDashboardVisualMode } from './useDashboardVisualMode';
+import { LayoutGrid } from 'lucide-react';
 import modes from './dashboardModes.module.css';
 import styles from './Dashboard2.module.css';
-
-const clampPercent = (value: number) => Math.max(0, Math.min(100, value));
-
-const getFillStyle = (percentage: number): CSSProperties => ({
-    '--card-fill': `${clampPercent(percentage)}%`
-} as CSSProperties);
-
-const getProgressStyle = (percentage: number): CSSProperties => ({
-    '--progress': `${clampPercent(percentage)}%`
-} as CSSProperties);
+import type { DashboardViewProps } from './types';
 
 const getAttendanceTone = (percentage: number) => {
     if (percentage >= 85) return modes.toneSuccess;
@@ -24,37 +10,19 @@ const getAttendanceTone = (percentage: number) => {
     return modes.toneDanger;
 };
 
-export const Dashboard2 = () => {
-    const {
-        stats,
-        courseAttendance,
-        overallAttendance,
-        enrolledShare,
-        notEnrolledShare,
-        withdrawnShare,
-        loadData,
-        getCoursePercentStyle
-    } = useDashboardData();
-    const { mode, setMode } = useDashboardVisualMode();
-    const { handleClearData, handleLoadDemoData } = useDashboardActions(loadData);
-
+export const DashboardMatrixView = ({
+    stats,
+    courseAttendance,
+    overallAttendance,
+    enrolledShare,
+    notEnrolledShare,
+    withdrawnShare,
+    getCoursePercentStyle,
+    getFillStyle,
+    getProgressStyle
+}: DashboardViewProps) => {
     return (
-        <div className={modes.dashboardModule} data-visual-mode={mode}>
-            <div className={modes.dashboardHeaderShell}>
-                <div className={modes.dashboardHeader}>
-                    <div>
-                        <h1 className={modes.dashboardTitle}>Dashboard 2</h1>
-                        <p className={modes.dashboardSubtitle}>Card matrix layout with all KPIs at equal visual weight.</p>
-                    </div>
-                    <DashboardHeaderControls
-                        mode={mode}
-                        onModeChange={setMode}
-                        onLoadDemoData={handleLoadDemoData}
-                        onClearData={handleClearData}
-                    />
-                </div>
-            </div>
-
+        <div>
             <section>
                 <div className={modes.sectionHeader}>
                     <div>
@@ -67,7 +35,7 @@ export const Dashboard2 = () => {
                     <article className={`${modes.dashboardCard} ${modes.tonePrimary} ${styles.metricCard}`} style={getFillStyle(0)}>
                         <div className={`${modes.cardBody} ${styles.metricBody}`}>
                             <div className={modes.metricLabelRow}>
-                                <span className={`${modes.metricIcon} ${modes.metricIconInfo}`}><Users size={14} /></span>
+                                <span className={`${modes.metricIcon} ${modes.metricIconInfo}`}><LayoutGrid size={14} /></span>
                                 <p className={modes.metricLabel}>Total Students</p>
                             </div>
                             <div className={modes.metricValueRow}>
@@ -79,7 +47,7 @@ export const Dashboard2 = () => {
                     <article className={`${modes.dashboardCard} ${modes.toneSuccess} ${styles.metricCard}`} style={getFillStyle(enrolledShare.percentage)}>
                         <div className={`${modes.cardBody} ${styles.metricBody}`}>
                             <div className={modes.metricLabelRow}>
-                                <span className={`${modes.metricIcon} ${modes.metricIconSuccess}`}><UserCheck size={14} /></span>
+                                <span className={`${modes.metricIcon} ${modes.metricIconSuccess}`}><LayoutGrid size={14} /></span>
                                 <p className={modes.metricLabel}>Enrolled</p>
                             </div>
                             <div className={modes.metricValueRow}>
@@ -94,7 +62,7 @@ export const Dashboard2 = () => {
                     <article className={`${modes.dashboardCard} ${modes.toneInfo} ${styles.metricCard}`} style={getFillStyle(notEnrolledShare.percentage)}>
                         <div className={`${modes.cardBody} ${styles.metricBody}`}>
                             <div className={modes.metricLabelRow}>
-                                <span className={`${modes.metricIcon} ${modes.metricIconInfo}`}><UserMinus size={14} /></span>
+                                <span className={`${modes.metricIcon} ${modes.metricIconInfo}`}><LayoutGrid size={14} /></span>
                                 <p className={modes.metricLabel}>Not enrolled</p>
                             </div>
                             <div className={modes.metricValueRow}>
@@ -109,7 +77,7 @@ export const Dashboard2 = () => {
                     <article className={`${modes.dashboardCard} ${modes.toneWarning} ${styles.metricCard}`} style={getFillStyle(withdrawnShare.percentage)}>
                         <div className={`${modes.cardBody} ${styles.metricBody}`}>
                             <div className={modes.metricLabelRow}>
-                                <span className={`${modes.metricIcon} ${modes.metricIconWarning}`}><AlertTriangle size={14} /></span>
+                                <span className={`${modes.metricIcon} ${modes.metricIconWarning}`}><LayoutGrid size={14} /></span>
                                 <p className={modes.metricLabel}>Withdrawn</p>
                             </div>
                             <div className={modes.metricValueRow}>
@@ -124,7 +92,7 @@ export const Dashboard2 = () => {
                     <article className={`${modes.dashboardCard} ${modes.tonePrimary} ${styles.metricCard}`} style={getFillStyle(0)}>
                         <div className={`${modes.cardBody} ${styles.metricBody}`}>
                             <div className={modes.metricLabelRow}>
-                                <span className={`${modes.metricIcon} ${modes.metricIconInfo}`}><BookOpen size={14} /></span>
+                                <span className={`${modes.metricIcon} ${modes.metricIconInfo}`}><LayoutGrid size={14} /></span>
                                 <p className={modes.metricLabel}>Ongoing Courses</p>
                             </div>
                             <div className={modes.metricValueRow}>
@@ -136,7 +104,7 @@ export const Dashboard2 = () => {
                     <article className={`${modes.dashboardCard} ${modes.tonePrimary} ${styles.metricCard}`} style={getFillStyle(0)}>
                         <div className={`${modes.cardBody} ${styles.metricBody}`}>
                             <div className={modes.metricLabelRow}>
-                                <span className={`${modes.metricIcon} ${modes.metricIconInfo}`}><Calendar size={14} /></span>
+                                <span className={`${modes.metricIcon} ${modes.metricIconInfo}`}><LayoutGrid size={14} /></span>
                                 <p className={modes.metricLabel}>Ongoing Sections</p>
                             </div>
                             <div className={modes.metricValueRow}>
@@ -148,7 +116,7 @@ export const Dashboard2 = () => {
                     <article className={`${modes.dashboardCard} ${modes.tonePrimary} ${styles.metricCard}`} style={getFillStyle(0)}>
                         <div className={`${modes.cardBody} ${styles.metricBody}`}>
                             <div className={modes.metricLabelRow}>
-                                <span className={`${modes.metricIcon} ${modes.metricIconInfo}`}><UserCheck size={14} /></span>
+                                <span className={`${modes.metricIcon} ${modes.metricIconInfo}`}><LayoutGrid size={14} /></span>
                                 <p className={modes.metricLabel}>Professors</p>
                             </div>
                             <div className={modes.metricValueRow}>
@@ -160,7 +128,7 @@ export const Dashboard2 = () => {
                     <article className={`${modes.dashboardCard} ${getAttendanceTone(overallAttendance.percentage)} ${styles.metricCard}`} style={getFillStyle(overallAttendance.percentage)}>
                         <div className={`${modes.cardBody} ${styles.metricBody}`}>
                             <div className={modes.metricLabelRow}>
-                                <span className={`${modes.metricIcon} ${modes.metricIconInfo}`}><TrendingUp size={14} /></span>
+                                <span className={`${modes.metricIcon} ${modes.metricIconInfo}`}><LayoutGrid size={14} /></span>
                                 <p className={modes.metricLabel}>Avg Attendance</p>
                             </div>
                             <div className={modes.metricValueRow}>

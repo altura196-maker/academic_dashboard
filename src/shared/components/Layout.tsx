@@ -11,8 +11,6 @@ import {
     Calendar,
     Sun,
     Moon,
-    LayoutGrid,
-    PanelsTopLeft,
     Settings
 } from 'lucide-react';
 import { Button } from './Button';
@@ -80,8 +78,6 @@ export const Layout = () => {
                 <nav className="sidebar-nav">
                     <div className="sidebar-menu-label">Menu</div>
                     <NavItem to="/" icon={Home} label="Dashboard" active={location.pathname === '/'} />
-                    <NavItem to="/dashboard-2" icon={LayoutGrid} label="Dashboard 2" active={location.pathname.startsWith('/dashboard-2')} />
-                    <NavItem to="/dashboard-3" icon={PanelsTopLeft} label="Dashboard 3" active={location.pathname.startsWith('/dashboard-3')} />
                     <NavItem to="/schedule" icon={Calendar} label="Schedule" active={location.pathname.startsWith('/schedule')} />
                     <NavItem to="/attendance" icon={CheckSquare} label="Attendance" active={location.pathname.startsWith('/attendance')} />
                     <NavItem to="/courses" icon={BookOpen} label="Courses" active={location.pathname.startsWith('/courses')} />
